@@ -1,6 +1,6 @@
 # FairLending
 
-FairLending is a Python class designed to help analyze the fairness of lending policies by comparing the outcomes for protected and comparator classes as per the guidelines of the Equal Credit Opportunity Act (ECOA) and Fair Housing Act (FHA).
+FairLending is a Python class designed to help analyze the fairness of lending policies by comparing the outcomes for protected and comparator classes.
 
 ## Features
 

@@ -127,32 +127,33 @@ class FairLending:
                 'air': air
             }
         return results
-
 import pandas as pd
 import numpy as np
 from datetime import datetime
 
-# Define the start and end date
+# Define the start and end dates
 start_date = datetime(2019, 1, 31)
 end_date = datetime(2024, 12, 31)
 
-# Create a date range
+# Create a monthly date range
 date_range = pd.date_range(start=start_date, end=end_date, freq='M')
 
-# Define products
+# Define products and segments
 products = ['bank', 'mort', 'student', 'credit']
-
-# Define segments
 segments = ['groq2', 'g2', 'g3']
 
-# Calculate the number of samples for each combination of date, product, and segment
+# Calculate the total number of permutations
 num_samples = len(date_range) * len(products) * len(segments)
 
-# Create synthetic data
+# Create the DataFrame using the Cartesian product of publish_date, product, and segment
+publish_dates = np.repeat(date_range, len(products) * len(segments))
+product_repeats = np.tile(np.repeat(products, len(segments)), len(date_range))
+segments_repeats = np.tile(segments, len(date_range) * len(products))
+
 data = {
-    'publish_date': np.tile(date_range, len(products) * len(segments)),
-    'product': np.repeat(products, len(date_range) * len(segments)),
-    'segment': np.tile(segments, len(date_range) * len(products)),
+    'publish_date': publish_dates,
+    'product': product_repeats,
+    'segment': segments_repeats,
     'var_co': np.random.randint(0, 5000000, size=num_samples),
     'var_co_un': np.random.randint(0, 10000, size=num_samples),
     'var_tot': np.random.randint(0, 50000000, size=num_samples),
@@ -161,8 +162,5 @@ data = {
     'var_dq60_un': np.random.randint(0, 25000, size=num_samples)
 }
 
-# Create the DataFrame
 df = pd.DataFrame(data)
 
-# Show the first few rows of the DataFrame
-print(df.head())

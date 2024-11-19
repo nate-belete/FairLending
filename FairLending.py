@@ -128,11 +128,9 @@ class FairLending:
             }
         return results
 
-
-
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Define the start and end date
 start_date = datetime(2019, 1, 31)
@@ -144,13 +142,17 @@ date_range = pd.date_range(start=start_date, end=end_date, freq='M')
 # Define products
 products = ['bank', 'mort', 'student', 'credit']
 
-# Define the number of samples (dates * products)
-num_samples = len(date_range) * len(products)
+# Define segments
+segments = ['groq2', 'g2', 'g3']
+
+# Calculate the number of samples for each combination of date, product, and segment
+num_samples = len(date_range) * len(products) * len(segments)
 
 # Create synthetic data
 data = {
-    'publish_date': np.tile(date_range, len(products)),
-    'product': np.repeat(products, len(date_range)),
+    'publish_date': np.tile(date_range, len(products) * len(segments)),
+    'product': np.repeat(products, len(date_range) * len(segments)),
+    'segment': np.tile(segments, len(date_range) * len(products)),
     'var_co': np.random.randint(0, 5000000, size=num_samples),
     'var_co_un': np.random.randint(0, 10000, size=num_samples),
     'var_tot': np.random.randint(0, 50000000, size=num_samples),

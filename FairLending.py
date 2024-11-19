@@ -127,3 +127,40 @@ class FairLending:
                 'air': air
             }
         return results
+
+
+
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+# Define the start and end date
+start_date = datetime(2019, 1, 31)
+end_date = datetime(2024, 12, 31)
+
+# Create a date range
+date_range = pd.date_range(start=start_date, end=end_date, freq='M')
+
+# Define products
+products = ['bank', 'mort', 'student', 'credit']
+
+# Define the number of samples (dates * products)
+num_samples = len(date_range) * len(products)
+
+# Create synthetic data
+data = {
+    'publish_date': np.tile(date_range, len(products)),
+    'product': np.repeat(products, len(date_range)),
+    'var_co': np.random.randint(0, 5000000, size=num_samples),
+    'var_co_un': np.random.randint(0, 10000, size=num_samples),
+    'var_tot': np.random.randint(0, 50000000, size=num_samples),
+    'var_tot_un': np.random.randint(0, 100000, size=num_samples),
+    'var_dq60': np.random.randint(0, 25000000, size=num_samples),
+    'var_dq60_un': np.random.randint(0, 25000, size=num_samples)
+}
+
+# Create the DataFrame
+df = pd.DataFrame(data)
+
+# Show the first few rows of the DataFrame
+print(df.head())

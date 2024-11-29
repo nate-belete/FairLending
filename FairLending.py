@@ -126,41 +126,41 @@ class FairLending:
                 'gaps': gaps,
                 'air': air
             }
-        return results
-import pandas as pd
-import numpy as np
-from datetime import datetime
 
-# Define the start and end dates
-start_date = datetime(2019, 1, 31)
-end_date = datetime(2024, 12, 31)
 
-# Create a monthly date range
-date_range = pd.date_range(start=start_date, end=end_date, freq='M')
 
-# Define products and segments
-products = ['bank', 'mort', 'student', 'credit']
-segments = ['groq2', 'g2', 'g3']
 
-# Calculate the total number of permutations
-num_samples = len(date_range) * len(products) * len(segments)
 
-# Create the DataFrame using the Cartesian product of publish_date, product, and segment
-publish_dates = np.repeat(date_range, len(products) * len(segments))
-product_repeats = np.tile(np.repeat(products, len(segments)), len(date_range))
-segments_repeats = np.tile(segments, len(date_range) * len(products))
 
-data = {
-    'publish_date': publish_dates,
-    'product': product_repeats,
-    'segment': segments_repeats,
-    'var_co': np.random.randint(0, 5000000, size=num_samples),
-    'var_co_un': np.random.randint(0, 10000, size=num_samples),
-    'var_tot': np.random.randint(0, 50000000, size=num_samples),
-    'var_tot_un': np.random.randint(0, 100000, size=num_samples),
-    'var_dq60': np.random.randint(0, 25000000, size=num_samples),
-    'var_dq60_un': np.random.randint(0, 25000, size=num_samples)
-}
+import yaml
+import csv
 
-df = pd.DataFrame(data)
+# Path to your CSV file
+csv_file_path = 'path/to/your/column_descriptions.csv'
 
+# Path to your YAML file
+yml_file_path = 'path/to/your/models.yml'
+
+# Read the column descriptions from the CSV file
+column_descriptions = {}
+with open(csv_file_path, mode='r') as csv_file:
+    csv_reader = csv.DictReader(csv_file)
+    for row in csv_reader:
+        column_descriptions[row['column_name']] = row['description']
+
+# Load the YAML file
+with open(yml_file_path, 'r') as yml_file:
+    yaml_content = yaml.safe_load(yml_file)
+
+# Update the YAML file with column descriptions
+for model in yaml_content['models']:
+    for column in model.get('columns', []):
+        column_name = column['name']
+        if column_name in column_descriptions:
+            column['description'] = column_descriptions[column_name]
+
+# Save the updated YAML file
+with open(yml_file_path, 'w') as yml_file:
+    yaml.dump(yaml_content, yml_file, default_flow_style=False)
+
+print("YAML file updated with column descriptions.")

@@ -129,23 +129,18 @@ class FairLending:
 
 
 
-
-
-
+# .yamllint
 extends: default
 
 rules:
-  line-length:
-    max: 120
-    level: warning
+  line-length: disable
+  document-start: disable
+  truthy: disable
+  key-ordering: enable
   indentation:
     spaces: 2
-    indent-sequences: false
-  document-start: disable
-  trailing-spaces: disable
-  empty-lines: disable
-  truthy:
-    check: disables
+  comments:
+    required: false
 
 
 

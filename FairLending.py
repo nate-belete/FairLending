@@ -132,35 +132,20 @@ class FairLending:
 
 
 
-import yaml
-import csv
+extends: default
 
-# Path to your CSV file
-csv_file_path = 'path/to/your/column_descriptions.csv'
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+    indent-sequences: false
+  document-start: disable
+  trailing-spaces: disable
+  empty-lines: disable
+  truthy:
+    check: disables
 
-# Path to your YAML file
-yml_file_path = 'path/to/your/models.yml'
 
-# Read the column descriptions from the CSV file
-column_descriptions = {}
-with open(csv_file_path, mode='r') as csv_file:
-    csv_reader = csv.DictReader(csv_file)
-    for row in csv_reader:
-        column_descriptions[row['column_name']] = row['description']
 
-# Load the YAML file
-with open(yml_file_path, 'r') as yml_file:
-    yaml_content = yaml.safe_load(yml_file)
-
-# Update the YAML file with column descriptions
-for model in yaml_content['models']:
-    for column in model.get('columns', []):
-        column_name = column['name']
-        if column_name in column_descriptions:
-            column['description'] = column_descriptions[column_name]
-
-# Save the updated YAML file
-with open(yml_file_path, 'w') as yml_file:
-    yaml.dump(yaml_content, yml_file, default_flow_style=False)
-
-print("YAML file updated with column descriptions.")

@@ -129,18 +129,40 @@ class FairLending:
 
 
 
-# .yamllint
-extends: default
+import yaml
 
-rules:
-  line-length: disable
-  document-start: disable
-  truthy: disable
-  key-ordering: enable
-  indentation:
-    spaces: 2
-  comments:
-    required: false
+def format_yaml(input_file, output_file):
+    # Load the existing YAML file
+    with open(input_file, 'r') as file:
+        data = yaml.safe_load(file)
 
+    # Re-structure the YAML content according to the desired format
+    formatted_data = {
+        'model': {
+            'name': data.get('name', 'your_model_name'), # default name if not provided
+            'description': data.get('description', 'A description of the model')
+        },
+        'variables': []
+    }
 
+    # Assume variables are provided directly in a key called 'variables'
+    for var in data.get('variables', []):
+        variable_info = {
+            'name': var.get('name', 'variable_name'),
+            'description': var.get('description', 'Description for variable'),
+            'column_tests': var.get('column_tests', [])
+        }
+        formatted_data['variables'].append(variable_info)
+
+    # Write the formatted data to the output file
+    with open(output_file, 'w') as file:
+        yaml.dump(formatted_data, file, default_flow_style=False)
+
+if __name__ == "__main__":
+    # Specify the input and output YAML files
+    input_yaml_file = 'input.yml'
+    output_yaml_file = 'formatted_output.yml'
+    
+    # Format the YAML file
+    format_yaml(input_yaml_file, output_yaml_file)
 

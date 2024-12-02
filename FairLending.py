@@ -127,14 +127,29 @@ class FairLending:
                 'air': air
             }
 
+
+
+WITH RankedDates AS (
+    SELECT 
+        your_date_column,
+        LAG(your_date_column) OVER (ORDER BY your_date_column DESC) AS previous_date
+    FROM 
+        your_table
+),
+DateDifferences AS (
+    SELECT 
+        your_date_column,
+        previous_date,
+        DATEDIFF(your_date_column, previous_date) AS date_diff
+    FROM 
+        RankedDates
+    WHERE 
+        previous_date IS NOT NULL
+)
 SELECT 
-    TO_CHAR(date_trunc('month', some_date_column), 'YYYY-MM') AS month_year,
-    COUNT(*) AS total_rows,
-    COUNT(date_timestamp) AS non_null_count,
-    COUNT(*) - COUNT(date_timestamp) AS null_count
+    MIN(date_diff) AS min_difference,
+    MAX(date_diff) AS max_difference,
+    AVG(date_diff) AS avg_difference,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY date_diff) AS median_difference
 FROM 
-    xxys
-GROUP BY 
-    month_year
-ORDER BY 
-    month_year;
+    DateDifferences;

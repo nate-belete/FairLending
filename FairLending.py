@@ -129,27 +129,22 @@ class FairLending:
 
 
 
-WITH RankedDates AS (
-    SELECT 
-        your_date_column,
-        LAG(your_date_column) OVER (ORDER BY your_date_column DESC) AS previous_date
-    FROM 
-        your_table
-),
-DateDifferences AS (
-    SELECT 
-        your_date_column,
-        previous_date,
-        DATEDIFF(your_date_column, previous_date) AS date_diff
-    FROM 
-        RankedDates
-    WHERE 
-        previous_date IS NOT NULL
-)
-SELECT 
-    MIN(date_diff) AS min_difference,
-    MAX(date_diff) AS max_difference,
-    AVG(date_diff) AS avg_difference,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY date_diff) AS median_difference
-FROM 
-    DateDifferences;
+import pandas as pd
+import numpy as np
+
+# All the possible values for each column
+dates = pd.date_range(start='1/1/2020', end='12/1/2024', freq='MS').strftime("%b-%Y")
+member_types = ['m1', 'm2']
+product_types = ['k1', 'k2', 'k3', 'k4', 'k5']
+
+# Generate all combinations
+data = []
+for date in dates:
+    for member in member_types:
+        for product in product_types:
+            data.append([date, member, product])
+
+# Convert to a DataFrame
+df = pd.DataFrame(data, columns=['date', 'member_type', 'product_type'])
+
+print(df)

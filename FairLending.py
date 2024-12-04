@@ -132,19 +132,17 @@ class FairLending:
 import pandas as pd
 import numpy as np
 
-# All the possible values for each column
-dates = pd.date_range(start='1/1/2020', end='12/1/2024', freq='MS').strftime("%b-%Y")
-member_types = ['m1', 'm2']
-product_types = ['k1', 'k2', 'k3', 'k4', 'k5']
+# Assume df is your DataFrame
 
-# Generate all combinations
-data = []
-for date in dates:
-    for member in member_types:
-        for product in product_types:
-            data.append([date, member, product])
+def custom_sum(row):
+    if row['col1'] == 0:
+        return 0
+    elif row['col1'] == 1 and (row['col2'] == 0 or pd.isnull(row['col2'])):
+        return 1
+    elif row['col1'] == 1 and row['col2'] == 1 and (row['col3'] == 0 or pd.isnull(row['col3'])):
+        return 2
+    # Add more conditions if needed
+    else:
+        return np.nan  # Or return any specific value
 
-# Convert to a DataFrame
-df = pd.DataFrame(data, columns=['date', 'member_type', 'product_type'])
-
-print(df)
+df['sum'] = df.apply(custom_sum, axis=1)

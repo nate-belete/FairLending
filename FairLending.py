@@ -128,20 +128,9 @@ class FairLending:
             }
 
 
-def custom_sum(row):
-    if row['col1'] == 0:
-        return 0
-    elif row['col1'] == 1 and (row['col2'] == 0 or pd.isnull(row['col2'])):
-        return 1
-    elif row['col1'] == 1 and row['col2'] == 1 and (row['col3'] == 0 or pd.isnull(row['col3'])):
-        return 2
-    elif row['col1'] == 1 and row['col2'] == 1 and row['col3'] == 1 and (row['col4'] == 0 or pd.isnull(row['col4'])):
-        return 3
-    elif row['col1'] == 1 and row['col2'] == 1 and row['col3'] == 1 and row['col4'] == 1 and (row['col5'] == 0 or pd.isnull(row['col5'])):
-        return 4
-    elif row['col1'] == 1 and row['col2'] == 1 and row['col3'] == 1 and row['col4'] == 1 and row['col5'] == 1 and (row['col6'] == 0 or pd.isnull(row['col6'])):
-        return 5
-    else:
-        return np.nan  # Or return any specific value or you can calculate total sum
-
-df['sum'] = df.apply(custom_sum, axis=1)
+SELECT
+    date,
+    total_members,
+    SUM(total_members) OVER (ORDER BY date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS rolling_sum_members
+FROM your_table_name
+ORDER BY date;

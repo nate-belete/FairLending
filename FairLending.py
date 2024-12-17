@@ -127,19 +127,16 @@ class FairLending:
                 'air': air
             }
 
-
-
 IF 
-  SUM(INT([Month] = DATEADD('month', -1, TODAY()))) - SUM(INT([Month] = DATEADD('month', -2, TODAY()))) >= 50 
+  { FIXED [Month] : COUNTD(ID) } - { FIXED [Month] : COUNTD(ID) } >= 50
   AND
-  (SUM(INT([Month] = DATEADD('month', -1, TODAY()))) / SUM(INT([Month] = DATEADD('month', -2, TODAY())))) >= 1.35
+  ({ FIXED [Month] : COUNTD(ID) } / { FIXED [Month] : COUNTD(ID) }) >= 1.35
   AND
-  SUM(INT([Month] = DATEADD('month', -2, TODAY()))) - SUM(INT([Month] = DATEADD('month', -3, TODAY()))) >= 50 
+  { FIXED [Month] : COUNTD(ID) } - { FIXED [Month] : COUNTD(ID) } >= 50
   AND
-  (SUM(INT([Month] = DATEADD('month', -2, TODAY()))) / SUM(INT([Month] = DATEADD('month', -3, TODAY())))) >= 1.35
+  ({ FIXED [Month] : COUNTD(ID) } / { FIXED [Month] : COUNTD(ID) }) >= 1.35
 THEN
   TRUE
 ELSE
   FALSE
 END
-df_final

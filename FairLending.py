@@ -127,16 +127,6 @@ class FairLending:
                 'air': air
             }
 
-IF 
-  { FIXED [Month] : COUNTD(ID) } - { FIXED [Month] : COUNTD(ID) } >= 50
-  AND
-  ({ FIXED [Month] : COUNTD(ID) } / { FIXED [Month] : COUNTD(ID) }) >= 1.35
-  AND
-  { FIXED [Month] : COUNTD(ID) } - { FIXED [Month] : COUNTD(ID) } >= 50
-  AND
-  ({ FIXED [Month] : COUNTD(ID) } / { FIXED [Month] : COUNTD(ID) }) >= 1.35
-THEN
-  TRUE
-ELSE
+WINDOW_SUM(IF [Percent Change] > 0.05 THEN 1 ELSE 0 END, -2, 0) = 3
   FALSE
 END

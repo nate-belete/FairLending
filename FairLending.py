@@ -128,23 +128,18 @@ class FairLending:
             }
 
 
-import pandas as pd
-import numpy as np
 
-# Creating sample data
-data = {
-    'date': pd.date_range(start='1/1/2021', periods=20),
-    'product': np.random.choice(['Product1', 'Product2', 'Product3'], 20),
-    'group': np.random.choice(['Group1', 'Group2', 'Group3'], 20),
-    'rolling': np.random.randint(1, 100, 20),
-    'message': np.random.choice(['Message1', 'Message2', 'Message3'], 20)
-}
-df = pd.DataFrame(data)
-
-df_pivot_rolling = df.pivot_table(values='rolling', index=['date', 'product'], columns='group')
-df_pivot_message = df.pivot_table(values='message', index=['date', 'product'], columns='group', aggfunc=lambda x:' '.join(str(v) for v in x))
-
-# Joining the pivot tables and fill NaN values with default
-df_final = df_pivot_rolling.join(df_pivot_message, lsuffix='_rolling', rsuffix='_message').fillna('default')
-
+IF 
+  SUM(INT([Month] = DATEADD('month', -1, TODAY()))) - SUM(INT([Month] = DATEADD('month', -2, TODAY()))) >= 50 
+  AND
+  (SUM(INT([Month] = DATEADD('month', -1, TODAY()))) / SUM(INT([Month] = DATEADD('month', -2, TODAY())))) >= 1.35
+  AND
+  SUM(INT([Month] = DATEADD('month', -2, TODAY()))) - SUM(INT([Month] = DATEADD('month', -3, TODAY()))) >= 50 
+  AND
+  (SUM(INT([Month] = DATEADD('month', -2, TODAY()))) / SUM(INT([Month] = DATEADD('month', -3, TODAY())))) >= 1.35
+THEN
+  TRUE
+ELSE
+  FALSE
+END
 df_final

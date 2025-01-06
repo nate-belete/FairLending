@@ -127,6 +127,59 @@ class FairLending:
                 'air': air
             }
 
-WINDOW_SUM(IF [Percent Change] > 0.05 THEN 1 ELSE 0 END, -2, 0) = 3
-  FALSE
-END
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Generate Synthetic data
+dates = pd.date_range(start='1/1/2021', end='1/12/2022')
+products = ['A', 'B', 'C', 'D']
+metrics_A = {'Metric_A': np.random.randint(50, 100, len(dates)),
+             'Metric_B': np.random.randint(100, 150, len(dates)),
+             'Metric_C': np.random.randint(50, 200, len(dates))}
+
+metrics_B = {'Metric_A': np.random.randint(200, 250, len(dates)),
+             'Metric_B': np.random.randint(250, 300, len(dates)),
+             'Metric_C': np.random.randint(100, 500, len(dates))}
+
+# I'm creating metrics for 'C' and 'D' similar to 'A' and 'B'
+metrics_C = {'Metric_A': np.random.randint(100, 150, len(dates)),
+             'Metric_B': np.random.randint(150, 200, len(dates)),
+             'Metric_C': np.random.randint(100, 300, len(dates))}
+
+metrics_D = {'Metric_A': np.random.randint(300, 350, len(dates)),
+             'Metric_B': np.random.randint(350, 400, len(dates)),
+             'Metric_C': np.random.randint(200, 600, len(dates))}
+
+data_A = pd.DataFrame({'date': dates, 'product': 'A', **metrics_A})
+data_B = pd.DataFrame({'date': dates, 'product': 'B', **metrics_B})
+data_C = pd.DataFrame({'date': dates, 'product': 'C', **metrics_C})
+data_D = pd.DataFrame({'date': dates, 'product': 'D', **metrics_D})
+
+df = pd.concat([data_A, data_B, data_C, data_D])
+
+def plot_timeseries(df, selected_metric):
+    product_list = df['product'].unique()
+
+    fig, axs = plt.subplots(2, 2, figsize=(14, 10))
+    for product, ax in zip(product_list, axs.flatten()):
+        data = df[df['product'] == product]
+        ax.plot(data['date'], data[selected_metric])
+        ax.set_title(f'Product {product}')
+        ax.set_xlabel('Date')
+        ax.set_ylabel(selected_metric)
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+def main():
+    selected_metric = st.sidebar.selectbox('Select a Metric', ['Metric_A', 'Metric_B', 'Metric_C'])
+
+    # display plots
+    st.markdown("## Time Series Plot")
+    plot_timeseries(df, selected_metric)
+
+
+if __name__ == "__main__":
+    main()

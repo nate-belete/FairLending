@@ -127,64 +127,37 @@ class FairLending:
                 'air': air
             }
 
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-
-# Generate Synthetic data
-dates = pd.date_range(start='1/1/2021', end='1/12/2022')
-products = ['A', 'B', 'C', 'D']
-metrics_A = {'Metric_A': np.random.randint(50, 100, len(dates)),
-             'Metric_B': np.random.randint(100, 150, len(dates)),
-             'Metric_C': np.random.randint(50, 200, len(dates))}
-
-metrics_B = {'Metric_A': np.random.randint(200, 250, len(dates)),
-             'Metric_B': np.random.randint(250, 300, len(dates)),
-             'Metric_C': np.random.randint(100, 500, len(dates))}
-
-# I'm creating metrics for 'C' and 'D' similar to 'A' and 'B'
-metrics_C = {'Metric_A': np.random.randint(100, 150, len(dates)),
-             'Metric_B': np.random.randint(150, 200, len(dates)),
-             'Metric_C': np.random.randint(100, 300, len(dates))}
-
-metrics_D = {'Metric_A': np.random.randint(300, 350, len(dates)),
-             'Metric_B': np.random.randint(350, 400, len(dates)),
-             'Metric_C': np.random.randint(200, 600, len(dates))}
-
-data_A = pd.DataFrame({'date': dates, 'product': 'A', **metrics_A})
-data_B = pd.DataFrame({'date': dates, 'product': 'B', **metrics_B})
-data_C = pd.DataFrame({'date': dates, 'product': 'C', **metrics_C})
-data_D = pd.DataFrame({'date': dates, 'product': 'D', **metrics_D})
-
-df = pd.concat([data_A, data_B, data_C, data_D])
-
-def plot_timeseries(df, selected_metric):
-    product_list = df['product'].unique()
-
-    fig, axs = plt.subplots(2, 2, figsize=(14, 10))
-    for product, ax in zip(product_list, axs.flatten()):
-        data = df[df['product'] == product]
-        sns.lineplot(data=data, x='date', y=selected_metric, ax=ax)
-        ax.set_title(f'Product {product}')
-        
-        # Format y labels
-        if selected_metric == 'Metric_A':
-            ax.yaxis.set_major_formatter(lambda x, pos: '{:.0%}'.format(x))
-        elif selected_metric in ['Metric_B', 'Metric_C']:
-            ax.yaxis.set_major_formatter(lambda x, pos: '${:.0f}'.format(x))
-        
-    plt.tight_layout()
-    st.pyplot(fig)
-
-def main():
-    selected_metric = st.sidebar.selectbox('Select a Metric', ['Metric_A', 'Metric_B', 'Metric_C'])
-
-    # display plots
-    st.markdown("## Time Series Plot")
-    plot_timeseries(df, selected_metric)
 
 
-if __name__ == "__main__":
-    main()
+def metric():
+    import streamlit as st
+    from streamlit_extras.metric_cards import style_metric_cards
+
+    # Sample data (replace with your actual data)
+    total_sales = 125000
+    sales_change = 12.5
+    active_users = 5000
+    user_change = -5.2
+    satisfaction_score = 4.8
+    score_change = 0.1
+
+    # Create metric cards using st.columns for layout
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(label="Total Sales", value=f"${total_sales:,.0f}", delta=f"{sales_change:.1f}%")
+
+    with col2:
+        st.metric(label="Active Users", value=f"{active_users:,}", delta=f"{user_change:.1f}%")
+
+    with col3:
+        st.metric(label="Satisfaction Score", value=f"{satisfaction_score:.1f}/5", delta=f"{score_change:.1f}")
+
+    # Apply styling from streamlit_extras
+    style_metric_cards(
+        background_color="#FFFFFF",  # White background
+        border_color="#253471",      # Navy blue border (adjust this hex if needed)
+        border_left_color="#64B5F6",  # Light blue left border (adjust this hex if needed)
+        box_shadow="2px 2px 5px 1px #A9A9A9"  # Subtle gray shadow
+    )
+

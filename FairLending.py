@@ -127,37 +127,24 @@ class FairLending:
                 'air': air
             }
 
+def loan_trends(df, loan_product):
+    # Making sure that the dates are in datetime format
+    df['date'] = pd.to_datetime(df['date'])
 
+    # Calculate the intervals
+    three_months_ago = df['date'].max() - pd.DateOffset(months=3)
+    six_months_ago = df['date'].max() - pd.DateOffset(months=6)
+    twelve_months_ago = df['date'].max() - pd.DateOffset(months=12)
+    eighteen_months_ago = df['date'].max() - pd.DateOffset(months=18)
 
-def metric():
-    import streamlit as st
-    from streamlit_extras.metric_cards import style_metric_cards
+    # Generate the statistics for each of the intervals
+    three_months_rate = df[(df.date > three_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
+    six_months_rate = df[(df.date > six_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
+    twelve_months_rate = df[(df.date > twelve_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
+    eighteen_months_rate = df[(df.date > eighteen_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
 
-    # Sample data (replace with your actual data)
-    total_sales = 125000
-    sales_change = 12.5
-    active_users = 5000
-    user_change = -5.2
-    satisfaction_score = 4.8
-    score_change = 0.1
+    # Generate the narrative
+    narrative = f'The values of Metric_A for {PRODUCT_NAMES[loan_product]} over the past 3 months was {three_months_rate}, over the last 6 months was {six_months_rate}, over the last 12 months was {twelve_months_rate} and for the last 18 months was {eighteen_months_rate}.'
 
-    # Create metric cards using st.columns for layout
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(label="Total Sales", value=f"${total_sales:,.0f}", delta=f"{sales_change:.1f}%")
-
-    with col2:
-        st.metric(label="Active Users", value=f"{active_users:,}", delta=f"{user_change:.1f}%")
-
-    with col3:
-        st.metric(label="Satisfaction Score", value=f"{satisfaction_score:.1f}/5", delta=f"{score_change:.1f}")
-
-    # Apply styling from streamlit_extras
-    style_metric_cards(
-        background_color="#FFFFFF",  # White background
-        border_color="#253471",      # Navy blue border (adjust this hex if needed)
-        border_left_color="#64B5F6",  # Light blue left border (adjust this hex if needed)
-        box_shadow="2px 2px 5px 1px #A9A9A9"  # Subtle gray shadow
-    )
+    st.markdown(narrative)
 

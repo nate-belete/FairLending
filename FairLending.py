@@ -126,25 +126,25 @@ class FairLending:
                 'gaps': gaps,
                 'air': air
             }
-
 def loan_trends(df, loan_product):
     # Making sure that the dates are in datetime format
     df['date'] = pd.to_datetime(df['date'])
+    current_rate = df[df.product == loan_product]['Metric_A'].iloc[-1]
 
     # Calculate the intervals
-    three_months_ago = df['date'].max() - pd.DateOffset(months=3)
-    six_months_ago = df['date'].max() - pd.DateOffset(months=6)
-    twelve_months_ago = df['date'].max() - pd.DateOffset(months=12)
-    eighteen_months_ago = df['date'].max() - pd.DateOffset(months=18)
+    three_months_ago_rate = df[(df.date > df['date'].max() - pd.DateOffset(months=3)) & (df.product == loan_product)]['Metric_A'].mean()
+    six_months_ago_rate = df[(df.date > df['date'].max() - pd.DateOffset(months=6)) & (df.product == loan_product)]['Metric_A'].mean()
+    twelve_months_ago_rate = df[(df.date > df['date'].max() - pd.DateOffset(months=12)) & (df.product == loan_product)]['Metric_A'].mean()
+    eighteen_months_ago_rate = df[(df.date > df['date'].max() - pd.DateOffset(months=18)) & (df.product == loan_product)]['Metric_A'].mean()
 
-    # Generate the statistics for each of the intervals
-    three_months_rate = df[(df.date > three_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
-    six_months_rate = df[(df.date > six_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
-    twelve_months_rate = df[(df.date > twelve_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
-    eighteen_months_rate = df[(df.date > eighteen_months_ago) & (df.product == loan_product)]['Metric_A'].mean()
+    
+    # Compare the current metric with past metrics and deduce trends
+    trend_three_months = "increasing" if current_rate > three_months_ago_rate else "decreasing"
+    trend_six_months = "increasing" if current_rate > six_months_ago_rate else "decreasing"
+    trend_twelve_months = "increasing" if current_rate > twelve_months_ago_rate else "decreasing"
+    trend_eighteen_months = "increasing" if current_rate > eighteen_months_ago_rate else "decreasing"
 
     # Generate the narrative
-    narrative = f'The values of Metric_A for {PRODUCT_NAMES[loan_product]} over the past 3 months was {three_months_rate}, over the last 6 months was {six_months_rate}, over the last 12 months was {twelve_months_rate} and for the last 18 months was {eighteen_months_rate}.'
+    narrative = f'The current value of Metric_A for {PRODUCT_NAMES[loan_product]} is {current_rate}. Over the past 3 months, it was {three_months_ago_rate} and the trend is {trend_three_months}. Over the last 6 months, it was {six_months_ago_rate} and the trend is {trend_six_months}. Over the last 12 months, it was {twelve_months_ago_rate} and the trend is {trend_twelve_months}. Over the last 18 months, it was {eighteen_months_ago_rate} and the trend is {trend_eighteen_months}.'
 
     st.markdown(narrative)
-

@@ -131,34 +131,13 @@ class FairLending:
 
 
 
-def plot_timeseries(df, selected_metric):
-    """
-    This function plots time series for each product using Altair.
-    """
-    charts_row_1, charts_row_2 = [], []
-    for i, product in enumerate(PRODUCTS):
-        data = df[df['product'] == product]
+import seaborn as sns
 
-        chart = (alt.Chart(data).mark_line().encode(
-            alt.X('date:T', title='Date'),
-            alt.Y(f'{selected_metric}:Q', title=selected_metric),
-            tooltip=[
-                alt.Tooltip('date:T', title='Date'),
-                alt.Tooltip(f'{selected_metric}:Q', title=selected_metric)
-            ]
-        ).properties(
-            title=f'{PRODUCT_NAMES[product]}'
-        ))
+# Get four HUSL colors
+colors = sns.color_palette("husl", 4)
 
-        if i < 2:
-            charts_row_1.append(chart)
-        else:
-            charts_row_2.append(chart)
+# Convert RGB colors to hexadecimal
+hex_colors = colors.as_hex()
 
-    # Concatenating the charts into a 2x2 grid
-    row_1_chart = alt.hconcat(*charts_row_1) 
-    row_2_chart = alt.hconcat(*charts_row_2)
-
-    chart_ = alt.vconcat(row_1_chart, row_2_chart)
-
-    st.altair_chart(chart_, use_container_width=True)
+# Assign colors to products
+COLORS = {product: color for product, color in zip(PRODUCTS, hex_colors)}

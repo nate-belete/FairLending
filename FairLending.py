@@ -145,48 +145,26 @@ class FairLending:
 
 
 
-import streamlit as st
-import pandas as pd
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the model
-model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
-@st.cache(allow_output_mutation=True)
-def load_data():
-    # Load your data
-    data = pd.read_csv('complaints.csv')
-    return data
+Informed Choice:
 
-@st.cache(allow_output_mutation=True)
-def embed_sentences(data):
-    # Embed all the complaints
-    embeddings = model.encode(data['complaints'], convert_to_tensor=True)
-    return embeddings
-    
-@st.cache(allow_output_mutation=True)
-def find_similar_complaints(query_embedding, sentence_embeddings, data):
-    # Compute similarity scores of the sentence with the corpus
-    cos_scores = cosine_similarity(query_embedding, 
-                                   sentence_embeddings)[0]
-    top_results = cos_scores.argsort()[-5:][::-1]
-    
-    return list(data.iloc[top_results]['complaint'])
+Lack of transparency: "Hidden fees", "fine print", "not disclosed", "unclear terms", "confusing language", "misleading information", "omitted details", "buried in the contract", "difficult to understand".
+Lack of knowledge: "Didn't know", "wasn't aware", "not explained", "misunderstood", "surprised by", "shocked to find", "wasn't told".
+Unfair:
 
-def main():
-    st.title('Complaints Similarity App')
-    data = load_data() 
-    sentence_embeddings = embed_sentences(data)
-    
-    input_complaint = st.text_input('Enter your complaint here...')
-    if input_complaint:
-        query_embedding = model.encode([input_complaint], convert_to_tensor=True)
-        similar_complaints = find_similar_complaints(query_embedding, sentence_embeddings, data)
-        
-        st.subheader('Here are some similar complaints:')
-        for complaint in similar_complaints:
-            st.write(complaint)
+Exploitation: "Taken advantage of", "vulnerable", "pressure to sign", "coerced", "no other option", "forced to", "preyed upon", "targeted".
+Excessive penalties: "Unreasonable fees", "exorbitant charges", "outrageous cost", "disproportionate to service", "penalty for...", "unfairly charged".
+Obstacles to cancellation: "Difficult to cancel", "impossible to get a refund", "unable to close account", "trapped in contract", "no way out".
+Junk Fees:
 
-if __name__ == '__main__':
-    main()
+Unexpected costs: "Surprise fee", "hidden charge", "extra cost", "didn't expect to pay", "added on", "tacked on", "not itemized", "no explanation for fee".
+Questionable purpose: "Unnecessary fee", "useless service", "no value", "bogus charge", "pointless", "rip-off", "scam".
+Misleading Promotions:
+
+False advertising: "Deceptive", "misleading", "false claims", "not as advertised", "bait and switch", "promised but not delivered", "lied about", "exaggerated".
+Unrealistic promises: "Guaranteed returns", "too good to be true", "impossible results", "false hope", "misrepresented benefits".
+Wrongful Conduct:
+
+Illegal activity: "Fraudulent", "illegal", "criminal", "violation of law", "unauthorized", "forged", "stolen", "scammed".
+Unethical behavior: "Unfair treatment", "discrimination", "harassment", "abuse of power", "breach of trust", "misuse of information", "privacy violation".

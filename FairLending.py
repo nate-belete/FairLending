@@ -131,13 +131,62 @@ class FairLending:
 
 
 
-import seaborn as sns
 
-# Get four HUSL colors
-colors = sns.color_palette("husl", 4)
 
-# Convert RGB colors to hexadecimal
-hex_colors = colors.as_hex()
 
-# Assign colors to products
-COLORS = {product: color for product, color in zip(PRODUCTS, hex_colors)}
+
+
+
+
+
+
+
+
+
+
+
+import streamlit as st
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load the model
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+@st.cache(allow_output_mutation=True)
+def load_data():
+    # Load your data
+    data = pd.read_csv('complaints.csv')
+    return data
+
+@st.cache(allow_output_mutation=True)
+def embed_sentences(data):
+    # Embed all the complaints
+    embeddings = model.encode(data['complaints'], convert_to_tensor=True)
+    return embeddings
+    
+@st.cache(allow_output_mutation=True)
+def find_similar_complaints(query_embedding, sentence_embeddings, data):
+    # Compute similarity scores of the sentence with the corpus
+    cos_scores = cosine_similarity(query_embedding, 
+                                   sentence_embeddings)[0]
+    top_results = cos_scores.argsort()[-5:][::-1]
+    
+    return list(data.iloc[top_results]['complaint'])
+
+def main():
+    st.title('Complaints Similarity App')
+    data = load_data() 
+    sentence_embeddings = embed_sentences(data)
+    
+    input_complaint = st.text_input('Enter your complaint here...')
+    if input_complaint:
+        query_embedding = model.encode([input_complaint], convert_to_tensor=True)
+        similar_complaints = find_similar_complaints(query_embedding, sentence_embeddings, data)
+        
+        st.subheader('Here are some similar complaints:')
+        for complaint in similar_complaints:
+            st.write(complaint)
+
+if __name__ == '__main__':
+    main()

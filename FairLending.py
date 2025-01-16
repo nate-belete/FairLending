@@ -186,24 +186,28 @@ df['annual_interest_rate'] = df.apply(get_annual_rate, axis=1)
 
 
 
-from scipy.optimize import bisect
 
+
+from scipy import optimize
+import pandas as pd
+
+# This is the function we want to solve
 def f(r, LoanAmount, MonthlyPayment, n):
-    return LoanAmount - MonthlyPayment * ((1 - (1 + r)**-n) / r)
+    return LoanAmount - MonthlyPayment * ((1 - (1 + r) ** (-n)) / r)
 
+# Define dataframe
 df = pd.DataFrame({
-    'LoanAmount': [20000, 30000, 40000],
+    'LoanAmount': [2000, 3000, 4000],
     'MonthlyPayment': [400, 600, 800],
     'term_duration': [48, 36, 60]
 })
 
-df['annual_interest_rate'] = df.apply(lambda row: bisect(f, 
-                                               a=1e-10,  # 'a' is the lower limit, should be close to 0
-                                               b=1,  # 'b' is the upper limit, should be reasonable high such as '1'
-                                               args=(row['LoanAmount'], 
-                                                     row['MonthlyPayment'], 
-                                                     row['term_duration'])), 
-                                                     axis=1)
+# Get annual interest rate
+def get_annual_rate(row):
+    try:
+        rate = optimize.newton(f, x0=0.01, args=(row['LoanAmount'], row['MonthlyPayment'], row['term_duration']))
+        return rate * 12  # The rate returned by optimize.newton is monthly
+    except RuntimeError:   # catches runtime errors
+        return 999   # abnormal indicator
 
-# convert it to an annual rate by multiplying by 12
-df['annual_interest_rate'] = df['annual_interest_rate'] * 12
+df['annual_interest_rate'] = df.apply(get_annual_rate, axis=1)

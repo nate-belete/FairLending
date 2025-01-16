@@ -143,14 +143,20 @@ class FairLending:
 
 
 
-
-
-import numpy as np
 import pandas as pd
+from pyfinancial.loan import Loan
 
-# Assuming your dataframe is named df and has columns 'loan_amount', 'term_duration', 'monthly_payment'
+# Define dataframe
+df = pd.DataFrame({
+    'loan_amount': [20000, 30000, 40000],
+    'monthly_payment': [400, 600, 800],
+    'term_duration': [48, 36, 60]  # in months
+})
 
-df['annual_interest_rate'] = df.apply(lambda row: np.rate(row['term_duration'], row['monthly_payment'], -row['loan_amount'], 0), axis=1)
+# Get annual interest rate
+def get_annual_rate(row):
+    loan = Loan(amount=row['loan_amount'], months=row['term_duration'], rate=5)  # Initialize with any rate
+    rate = loan.find_rate(payment=row['monthly_payment'])
+    return rate  # The package returns percentage value
 
-# Then the interest returned by numpy.rate is in monthly terms, convert it into annual rate by multiplying with 12
-df['annual_interest_rate'] = df['annual_interest_rate'] * 12
+df['annual_interest_rate'] = df.apply(get_annual_rate, axis=1)

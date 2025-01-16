@@ -142,20 +142,29 @@ class FairLending:
 
 
 
-
+from scipy import optimize
 import pandas as pd
-from pyfinancial.loan import Loan
+
+# This is the function we want to solve
+def f(r, LoanAmount, MonthlyPayment, n):
+    return LoanAmount - MonthlyPayment * ((1 - (1 + r) ** (-n)) / r)
 
 # Define dataframe
 df = pd.DataFrame({
-    'loan_amount': [20000, 30000, 40000],
-    'monthly_payment': [400, 600, 800],
-    'term_duration': [48, 36, 60]  # in months
+    'LoanAmount': [2000, 3000, 4000],
+    'MonthlyPayment': [400, 600, 800],
+    'term_duration': [48, 36, 60]
 })
 
 # Get annual interest rate
-def get_annual_rate(row):
-    loan = Loan(amount=row['loan_amount'], months=row['term_duration'], rate=5)  # Initialize with any rate
+df['annual_interest_rate'] = df.apply(lambda row: optimize.newton(f, 
+                                                                 x0=0.01,
+                                                                 args=(row['LoanAmount'], 
+                                                                       row['MonthlyPayment'], 
+                                                                       row['term_duration'])), axis=1)
+
+# Then convert it to anish date by multiplying by 12
+df['annual_interest_rate'] = df['annual_interest_rate'] * 12
     rate = loan.find_rate(payment=row['monthly_payment'])
     return rate  # The package returns percentage value
 

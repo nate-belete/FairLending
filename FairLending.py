@@ -145,26 +145,12 @@ class FairLending:
 
 
 
+import numpy as np
+import pandas as pd
 
+# Assuming your dataframe is named df and has columns 'loan_amount', 'term_duration', 'monthly_payment'
 
-Informed Choice:
+df['annual_interest_rate'] = df.apply(lambda row: np.rate(row['term_duration'], row['monthly_payment'], -row['loan_amount'], 0), axis=1)
 
-Lack of transparency: "Hidden fees", "fine print", "not disclosed", "unclear terms", "confusing language", "misleading information", "omitted details", "buried in the contract", "difficult to understand".
-Lack of knowledge: "Didn't know", "wasn't aware", "not explained", "misunderstood", "surprised by", "shocked to find", "wasn't told".
-Unfair:
-
-Exploitation: "Taken advantage of", "vulnerable", "pressure to sign", "coerced", "no other option", "forced to", "preyed upon", "targeted".
-Excessive penalties: "Unreasonable fees", "exorbitant charges", "outrageous cost", "disproportionate to service", "penalty for...", "unfairly charged".
-Obstacles to cancellation: "Difficult to cancel", "impossible to get a refund", "unable to close account", "trapped in contract", "no way out".
-Junk Fees:
-
-Unexpected costs: "Surprise fee", "hidden charge", "extra cost", "didn't expect to pay", "added on", "tacked on", "not itemized", "no explanation for fee".
-Questionable purpose: "Unnecessary fee", "useless service", "no value", "bogus charge", "pointless", "rip-off", "scam".
-Misleading Promotions:
-
-False advertising: "Deceptive", "misleading", "false claims", "not as advertised", "bait and switch", "promised but not delivered", "lied about", "exaggerated".
-Unrealistic promises: "Guaranteed returns", "too good to be true", "impossible results", "false hope", "misrepresented benefits".
-Wrongful Conduct:
-
-Illegal activity: "Fraudulent", "illegal", "criminal", "violation of law", "unauthorized", "forged", "stolen", "scammed".
-Unethical behavior: "Unfair treatment", "discrimination", "harassment", "abuse of power", "breach of trust", "misuse of information", "privacy violation".
+# Then the interest returned by numpy.rate is in monthly terms, convert it into annual rate by multiplying with 12
+df['annual_interest_rate'] = df['annual_interest_rate'] * 12

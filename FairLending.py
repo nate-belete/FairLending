@@ -142,72 +142,158 @@ class FairLending:
 
 
 
-from scipy import optimize
-import pandas as pd
-
-# This is the function we want to solve
-def f(r, LoanAmount, MonthlyPayment, n):
-    return LoanAmount - MonthlyPayment * ((1 - (1 + r) ** (-n)) / r)
-
-# Define dataframe
-df = pd.DataFrame({
-    'LoanAmount': [2000, 3000, 4000],
-    'MonthlyPayment': [400, 600, 800],
-    'term_duration': [48, 36, 60]
-})
-
-# Get annual interest rate
-df['annual_interest_rate'] = df.apply(lambda row: optimize.newton(f, 
-                                                                 x0=0.01,
-                                                                 args=(row['LoanAmount'], 
-                                                                       row['MonthlyPayment'], 
-                                                                       row['term_duration'])), axis=1)
-
-# Then convert it to anish date by multiplying by 12
-df['annual_interest_rate'] = df['annual_interest_rate'] * 12
-    rate = loan.find_rate(payment=row['monthly_payment'])
-    return rate  # The package returns percentage value
-
-df['annual_interest_rate'] = df.apply(get_annual_rate, axis=1)
 
 
 
 
+ Analyzing Refinanced Student Loan Data in the Ascend Dataset
 
 
 
+Project Overview
 
 
 
+This ad hoc analysis project focuses on determining if the Ascend dataset contains critical student loan information, specifically interest rate, loan term, loan balance, and scheduled monthly payment, for borrowers who refinanced their student loans with our bank. The objective is to evaluate loan details before and after refinancing, leveraging both the Ascend dataset and our internal data, and to link the datasets for a comprehensive analysis.
 
 
 
+Goals of the Analysis
+
+1. Assess Data Availability in the Ascend Dataset
+
+Verify the presence of:
+
+• Annual Percentage Rate (APR)
+
+• Loan term
+
+• Loan balance
+
+• Scheduled monthly payment
+
+2. Identify Refinanced Borrowers
+
+• Use our internal dataset to pinpoint customers who refinanced student loans with our bank.
+
+3. Link Pre- and Post-Refinance Loan Details
+
+• Match customers’ pre-refinance loan details from the Ascend dataset to their post-refinance loan details in our internal dataset.
+
+4. Determine Borrower Type
+
+• Categorize customers as undergraduate or graduate borrowers.
 
 
 
+Step-by-Step Approach
 
 
 
-from scipy import optimize
-import pandas as pd
+1. Extract Loan Data from the Ascend Dataset
 
-# This is the function we want to solve
-def f(r, LoanAmount, MonthlyPayment, n):
-    return LoanAmount - MonthlyPayment * ((1 - (1 + r) ** (-n)) / r)
+• Identify account-level details for borrowers, including:
 
-# Define dataframe
-df = pd.DataFrame({
-    'LoanAmount': [2000, 3000, 4000],
-    'MonthlyPayment': [400, 600, 800],
-    'term_duration': [48, 36, 60]
-})
+• APR
 
-# Get annual interest rate
-def get_annual_rate(row):
-    try:
-        rate = optimize.newton(f, x0=0.01, args=(row['LoanAmount'], row['MonthlyPayment'], row['term_duration']))
-        return rate * 12  # The rate returned by optimize.newton is monthly
-    except RuntimeError:   # catches runtime errors
-        return 999   # abnormal indicator
+• Loan term
 
-df['annual_interest_rate'] = df.apply(get_annual_rate, axis=1)
+• Loan balance
+
+• Scheduled monthly payment
+
+
+
+2. Analyze Internal Dataset for Refinanced Loans
+
+• Extract data on borrowers who refinanced their student loans with us, focusing on their:
+
+• APR
+
+• Loan term
+
+• Loan balance
+
+• Scheduled monthly payment
+
+
+
+3. Determine Borrower Type
+
+• Identify whether the borrower held an undergraduate or graduate student loan, based on internal categorization or relevant data flags.
+
+
+
+4. Link the Two Datasets
+
+• Establish a common identifier (e.g., account number, SSN, or unique customer ID) to connect pre-refinance and post-refinance loan records.
+
+• Create a unified dataset showing:
+
+• Pre-refinance details (from Ascend dataset)
+
+• Post-refinance details (from internal dataset)
+
+
+
+5. Generate Comparative Insights
+
+• Analyze and document differences in loan terms, interest rates, and monthly payments before and after refinancing.
+
+
+
+Deliverables
+
+1. Unified Dataset: A consolidated view of borrower loan details before and after refinancing.
+
+2. Data Availability Report: Confirmation of the availability of required fields in the Ascend dataset.
+
+3. Analysis Summary:
+
+• Changes in loan terms (e.g., lower interest rates, adjusted loan durations).
+
+• Categorization of undergraduate vs. graduate borrowers.
+
+4. Recommendations: Insights for improving data linkage and potential refinements to our processes for better visibility into borrower profiles.
+
+
+
+Key Challenges and Solutions
+
+
+
+Challenge Solution
+
+Linking datasets with inconsistent IDs Validate and normalize identifiers.
+
+Missing or incomplete data in Ascend Flag and address gaps for future cycles.
+
+Categorizing borrower type accurately Leverage supplemental data or infer.
+
+
+
+Timeline
+
+
+
+Task Timeline
+
+Extract Ascend dataset details Day 1
+
+Analyze internal dataset Day 2
+
+Link datasets Day 3
+
+Generate unified dataset and insights Day 4
+
+Prepare summary and final recommendations Day 5
+
+
+
+Next Steps
+
+• Validate data availability in the Ascend dataset.
+
+• Initiate extraction and analysis phases.
+
+• Update stakeholders with progress and findings.

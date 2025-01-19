@@ -238,3 +238,83 @@ df['numerics'] = df['complaint'].apply(count_numerics)
 # Sentiment related features
 df['polarity'] = df['complaint'].apply(calculate_polarity)
 df['subjectivity'] = df['complaint'].apply(calculate_subjectivity)
+
+
+
+
+
+
+import xgboost as xgb
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
+from sklearn.metrics import classification_report, precision_score, recall_score, confusion_matrix
+from sklearn.utils import class_weight
+import pandas as pd
+
+# Assuming df is your pandas dataframe and "label" is the target column
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# Split into train, validation, and test set (60%, 20%, 20%)
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, stratify=y, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42)
+
+# Defining the xgboost model
+clf = xgb.XGBClassifier(objective='binary:logistic')
+
+# Defining the hyperparameters to tune
+param_grid = { 
+    'n_estimators': [ 10, 20],
+    'learning_rate': [0.01, 0.1],
+    'max_depth': [3, 5]
+}
+
+# Creating the grid search object
+grid_search = GridSearchCV(estimator=clf, param_grid=param_grid,
+                           scoring='f1', n_jobs=-1, cv=StratifiedKFold(n_splits=10), verbose=3)
+
+# Fitting grid search to the train data
+grid_search.fit(X_train, y_train)
+
+# Evaluating the model's performance
+y_train_pred = grid_search.predict(X_train)
+y_val_pred = grid_search.predict(X_val)
+y_test_pred = grid_search.predict(X_test)
+
+# print("Training Metrics:")
+# print(classification_report(y_train, y_train_pred))
+# print("Validation Metrics:")
+# print(classification_report(y_val, y_val_pred))
+# print("Testing Metrics:")
+# print(classification_report(y_test, y_test_pred))
+
+print("Best Parameters:")
+print(grid_search.best_params_)
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import ConfusionMatrixDisplay
+
+# Your existing code goes here ...
+
+def plot_confusion_matrix(y_true, y_pred, title):
+    cm = confusion_matrix(y_true, y_pred)
+    cm = pd.DataFrame(cm, columns=['Predicted Non-Fraud', 'Predicted Fraud'], index=['Actual Non-Fraud', 'Actual Fraud'])
+
+    # Adding row and column totals
+    cm['Row Total'] = cm.sum(axis=1)
+    cm.loc['Column Total'] = cm.sum(axis=0)
+
+    plt.figure(figsize=(6,4))
+    sns.heatmap(cm, annot=True, fmt=".0f", linewidths=.5, square = True, cmap = 'Blues',annot_kws={"size": 10})
+    plt.title(title)
+    plt.show()
+    
+# plot confusion matrix for training dataset
+plot_confusion_matrix(y_train, y_train_pred, "Training Confusion Matrix")
+
+# plot confusion matrix for validation dataset
+plot_confusion_matrix(y_val, y_val_pred, "Validation Confusion Matrix")
+
+
+# plot confusion matrix for testing dataset
+plot_confusion_matrix(y_test, y_test_pred, "Testing Confusion Matrix")

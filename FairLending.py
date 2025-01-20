@@ -129,7 +129,47 @@ class FairLending:
 
 
 
+from transformers import BertModel, BertTokenizer
 
+# Initializing a BERT bert-base-uncased style configuration
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained("bert-base-uncased")
+
+def get_sentence_embedding(text):
+    inputs = tokenizer(text, return_tensors="pt")
+    outputs = model(**inputs)
+    # Use the last hidden state as sentence embeddings
+    embeddings = outputs.last_hidden_state[:, 0, :].detach().numpy()
+    return embeddings[0]
+
+df['bert_embed'] = df['complaint'].apply(get_sentence_embedding)
+
+from transformers import pipeline
+
+# Initialize sentiment analysis pipeline
+sentiment_analysis = pipeline("sentiment-analysis")
+
+# Get sentiment score 
+def get_sentiment_score(text):
+    sentiment = sentiment_analysis(text)[0]
+    return sentiment['score'] if sentiment['label'] == 'POSITIVE' else -sentiment['score']
+
+df['sentiment_score'] = df['complaint'].apply(get_sentiment_score)
+
+from transformers import pipeline
+
+# Assuming that df is your DataFrame and 'complaint_text' is your column with the complaints
+
+# Initialize the huggingface sentiment analysis pipeline
+nlp = pipeline('sentiment-analysis')
+
+def detect_emotion(text):
+    # Use the model to get the emotion of the text
+    result = nlp(text)[0]
+    return result['label'] 
+
+# Apply the function to your complaints column
+df['emotion'] = df['complaint'].apply(detect_emotion)
 
 
 

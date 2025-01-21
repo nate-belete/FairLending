@@ -358,3 +358,35 @@ plot_confusion_matrix(y_val, y_val_pred, "Validation Confusion Matrix")
 
 # plot confusion matrix for testing dataset
 plot_confusion_matrix(y_test, y_test_pred, "Testing Confusion Matrix")
+
+
+
+
+
+import torch
+from transformers import BertModel, BertTokenizer
+from scipy.spatial.distance import cosine
+
+# Load pre-trained model and tokenizer
+model = BertModel.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+# Function to convert sentence to BERT embeddings
+def sentence_to_vec(s):
+    inputs = tokenizer(s, return_tensors="pt")
+    outputs = model(**inputs)
+    return outputs.last_hidden_state.mean(1).detach().numpy()
+
+# Convert complaint to embeddings
+df_1['complaint_emb'] = df_1['complaint'].apply(sentence_to_vec)
+
+# Convert cleaned complaint to embeddings
+df_2['complaints_clean_emb'] = df_2['complaints_clean'].apply(sentence_to_vec)
+
+# Function to get the most similar complaint from df_1 for each clean complaint in df_2
+def get_most_similar(row):
+    similarities = df_1['complaint_emb'].apply(lambda x: 1 - cosine(x, row))
+    return df_1.iloc[similarities.idxmax()]
+
+#Apply the function
+df_2['closest_complaint'] = df_2['complaints_clean_emb'].apply(get_most_similar)

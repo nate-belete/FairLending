@@ -281,7 +281,41 @@ df['subjectivity'] = df['complaint'].apply(calculate_subjectivity)
 
 
 
+import pandas as pd
 
+def create_dummy(df, column, drop='most'):
+    """
+    Create dummy variables from the specified column of the dataframe. 
+    
+    Parameters:
+    df: DataFrame. The DataFrame from which to create dummy variables.
+    column: str. The column name in DataFrame to be converted into dummy variables.
+    drop: str, default 'most'. Specify 'most' or 'least' to drop the most or least common category. 
+
+    Returns:
+    dummies: DataFrame. The DataFrame containing the dummy variables.
+    """
+
+    # calculate occurrences
+    counts = df[column].value_counts()
+
+    # Get the most and least common
+    most_common = counts.idxmax()
+    least_common = counts.idxmin()
+
+    # Create dummies
+    dummies = pd.get_dummies(df[column], drop_first=False)
+    
+    if drop == 'most':
+        # Drop the most common category
+        dummies.drop(f'{most_common}', axis=1, inplace=True)
+    elif drop == 'least':
+        # Drop the least common category
+        dummies.drop(f'{least_common}', axis=1, inplace=True)
+    else:
+        raise ValueError("The 'drop' parameter must be 'most' or 'least'.")
+
+    return dummies
 
 
 import xgboost as xgb

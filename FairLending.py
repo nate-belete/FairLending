@@ -424,3 +424,42 @@ def get_most_similar(row):
 
 #Apply the function
 df_2['closest_complaint'] = df_2['complaints_clean_emb'].apply(get_most_similar)
+
+
+
+
+
+
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.utils import resample
+
+# assuming df is your pandas DataFrame
+X = df.iloc[:, :-1] 
+y = df.iloc[:, -1]
+
+# train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.40, random_state=42, stratify=y) 
+
+# further split test set into validation and test sets
+X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.50, random_state=42, stratify=y_test)
+
+# concatenate our training data back together
+X = pd.concat([X_train, y_train], axis=1)
+
+# separate minority and majority classes
+not_fraud = X[X.target==0]
+fraud = X[X.target==1]
+
+# upsample minority
+fraud_upsampled = resample(fraud,
+                          replace=True, # sample with replacement
+                          n_samples=len(not_fraud), # match number in majority class
+                          random_state=27) # reproducible results
+
+# combine majority and upsampled minority
+upsampled = pd.concat([not_fraud, fraud_upsampled])
+
+# check new class counts
+upsampled.target.value_counts()

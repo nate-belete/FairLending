@@ -1,40 +1,125 @@
-Leveraging Data Analysis for Fraud Complaint Understanding
-Overview
-In our latest team meeting, we discussed strategies to better comprehend fraudulent complaints relative to industry peers using data analysis and modelling. The aim is to bolster our positioning with regulators and minimize the overstated notion of our company's CFPB fraud complaints.
 
-Initial Findings
-Our initial exploration into the data showcased prospective patterns of fraud. Similar language used in several complaints and particular aspects of encryption data signal a potential industry wide issue.
+DBT Tagging Expectations
 
-Implementation Plan
-Upon gaining early insights, the team proposed several actions:
 
-Model Development
-This crucial part of our plan aims to improve our understanding and prediction capabilities. We are considering a two-fold approach:
 
-Feature Engineering: This step will revolve around analyzing and structuring the complaint narratives into machine-readable inputs. Important characteristics, such as emotional tone, legal references, and use of capitalization, will be transformed into the model's input variables.
-Supervised Machine Learning Model Creation: After the successful engineering of input features, we will construct an AI-powered model. This model's objective is to classify complaints into fraud and non-fraud categories based on the engineered features.
-Benchmarking
-As part of our understanding of the competitive landscape, we will compare our fraud complaint rates against other online-specific companies, like Chase or Capital One.
+1. Introduction
 
-Model Validation
-The final part of the plan involves testing the predictive model using our internal complaints data. After successful internal validation, we will consider adding external institutions data for further credibility.
 
-Challenges and Considerations
-Despite solid plans, several challenges were noted during the discussions:
 
-Data Gaps: A lack of verifiable truth labels for external bank fraud cases.
-Model Scope: A need to balance between model accuracy and functional direction guidance.
-Language Patterns: Difficulty in distinguishing between emotional and rational tones.
-Peer Comparison: Differentiating genuine complaints from fraud using statistical and predictive models.
-Action Items
-Several actions have been agreed upon to move the plan forward:
+Provide a brief overview of the importance of tagging in DBT and how it aligns with your organization’s data governance policies.
 
-Proceed with the development of the supervised machine learning model.
-Prepare a preliminary model to be reviewed within 1-2 weeks.
-Look for additional data sources for validation if needed.
-Prioritize the existing fraud project over secondary tasks, such as UAR risk management.
-Regulatory Aspects
-We plan to highlight the differences of our online-only model against traditional banks. Solid empirical data will demonstrate the higher rate of fraud complaints due to our business model, aligning our situation with broader industry trends.
+• Why tagging matters
 
-Concluding Thoughts
-The team is in agreement to set the course for the classification model development. Initial results will be ready for review, feedback, and following amendments. This initiative will allow us to present a clear, data-backed narrative to our regulators, providing necessary context to our higher fraud complaint rate.
+• How tagging improves data discoverability and compliance
+
+• Reference to existing data governance standards
+
+
+
+2. When and Why to Use Tags in DBT
+
+
+
+Explain the key use cases for tagging in DBT models, particularly when working with PII data and other sensitive information.
+
+• PII Data Tagging – Ensuring compliance with internal data policies
+
+• Data Classification – Differentiating between sensitive, confidential, and public data
+
+• Project Organization – Grouping models for easy discoverability
+
+• Pipeline Management – Tagging for efficient testing and deployment
+
+
+
+3. Internal Guidelines and Best Practices
+
+
+
+3.1 Standard Tagging Format
+
+
+
+Provide a reference to your organization’s best practices on DBT tagging conventions.
+
+• Naming conventions
+
+• Required vs. optional tags
+
+• Examples of properly tagged DBT models
+
+
+
+3.2 PII Data Tagging Guidelines
+
+
+
+Since PII data requires special attention, link to internal Confluence pages that cover:
+
+• Definition of PII data within the organization
+
+• How to properly tag columns containing PII
+
+• Compliance and auditing requirements
+
+
+
+🔗 [PII Data Tagging Guidelines (Internal Link)]
+
+
+
+3.3 Other Tagging Considerations
+
+• Tags for regulatory compliance (GDPR, CCPA, etc.)
+
+• Tags for business units or functional areas
+
+• Tagging for performance monitoring
+
+
+
+4. How to Implement Tagging in DBT
+
+
+
+Step-by-step instructions or code examples for adding tags in DBT models.
+
+
+
+Example YAML snippet:
+
+models:
+  - name: customer_data
+    description: "Customer details including personal information"
+    tags: ["PII", "customer", "sensitive"]
+5. Helpful Internal Resources & Links
+
+
+
+List relevant internal Confluence pages and documentation that team members should refer to for deeper understanding:
+
+• 🔗 [Company Data Governance Policy]
+
+• 🔗 [Tagging Standards for PII Data]
+
+• 🔗 [DBT Model Documentation Guidelines]
+
+• 🔗 [Snowflake Data Classification & Security]
+
+• 🔗 [Regulatory Compliance Guidelines]
+
+
+
+6. FAQs and Support
+
+
+
+Address common questions and provide links to Slack channels, team contacts, or additional support resources.
+
+• Who to contact for DBT tagging issues?
+
+• Where to request new tag categories?
+
+• How to report a tagging discrepancy?
+

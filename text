@@ -1,125 +1,89 @@
+To provide better descriptions for the metrics listed in the image, I will rephrase the definitions in a more detailed and user-friendly way. Here’s the updated list:
 
-DBT Tagging Expectations
+Bill Pay
 
+• Scheduled Bill Pay Usage: Tracks the number of times customers use scheduled bill payment features.
 
 
-1. Introduction
 
+Deposit Accounts
 
+• Number of Deposit Accounts: Total number of accounts customers have for deposits.
 
-Provide a brief overview of the importance of tagging in DBT and how it aligns with your organization’s data governance policies.
 
-• Why tagging matters
 
-• How tagging improves data discoverability and compliance
+Savings Accounts
 
-• Reference to existing data governance standards
+• Number of Savings Accounts: Total number of savings accounts held by customers.
 
+Engagement
 
+• Frequency of App Logins Per Month: Measures how often customers log in to the app during a month.
 
-2. When and Why to Use Tags in DBT
+Outflow Metrics
 
+• Total Number of Outflow Transactions Per Month: Count of all transactions where money leaves a customer’s account.
 
+• Total Balance of Outflows Per Month: Sum of all outgoing transaction amounts within a month.
 
-Explain the key use cases for tagging in DBT models, particularly when working with PII data and other sensitive information.
+• Number of Purchase Transactions Per Month: Total count of purchase-related outflow transactions.
 
-• PII Data Tagging – Ensuring compliance with internal data policies
+• Total Purchase Outflows Per Month: Total monetary value of purchases.
 
-• Data Classification – Differentiating between sensitive, confidential, and public data
+• Number of Debt Transactions Per Month: Count of transactions related to debt payments.
 
-• Project Organization – Grouping models for easy discoverability
+• Total Debt Outflows Per Month: Sum of all debt payments during the month.
 
-• Pipeline Management – Tagging for efficient testing and deployment
+• Number of Transfer Transactions Per Month: Count of money transfers out of customer accounts.
 
+• Total Transfer Outflows Per Month: Monetary total of transfer transactions.
 
+• Number of Payment Transactions Per Month: Count of payments made (e.g., utilities, credit cards).
 
-3. Internal Guidelines and Best Practices
+• Total Payment Outflows Per Month: Total value of payment transactions.
 
+• Other Outflows Per Month: Count of miscellaneous outgoing transactions not categorized.
 
+• Total Other Outflows Per Month: Total value of uncategorized outflows.
 
-3.1 Standard Tagging Format
+• Number of SoFi Invest Transactions Per Month: Total count of investment-related outgoing transactions.
 
+• Total SoFi Invest Outflows Per Month: Sum of investment-related outflows.
 
+Inflow Metrics
 
-Provide a reference to your organization’s best practices on DBT tagging conventions.
+• Total Number of Inflow Transactions Per Month: Count of all transactions where money enters a customer’s account.
 
-• Naming conventions
+• Total Balance of Inflows Per Month: Sum of all incoming transaction amounts within a month.
 
-• Required vs. optional tags
+• Number of Purchase Inflow Transactions Per Month: Count of incoming purchases (e.g., refunds).
 
-• Examples of properly tagged DBT models
+• Total Purchase Inflows Per Month: Total monetary value of purchase-related inflows.
 
+• Number of Debt Inflow Transactions Per Month: Count of incoming debt-related payments (e.g., credits from lenders).
 
+• Total Debt Inflows Per Month: Sum of incoming debt-related payments.
 
-3.2 PII Data Tagging Guidelines
+• Number of Transfer Inflow Transactions Per Month: Count of money transfers into customer accounts.
 
+• Total Transfer Inflows Per Month: Total value of transfer transactions coming into accounts.
 
+• Number of Payment Inflow Transactions Per Month: Count of incoming payments (e.g., reimbursements).
 
-Since PII data requires special attention, link to internal Confluence pages that cover:
+• Total Payment Inflows Per Month: Total monetary value of incoming payments.
 
-• Definition of PII data within the organization
+• Other Inflows Per Month: Count of miscellaneous incoming transactions.
 
-• How to properly tag columns containing PII
+• Total Other Inflows Per Month: Total value of uncategorized inflows.
 
-• Compliance and auditing requirements
+• Number of Direct Deposit Transactions Per Month: Count of incoming direct deposits.
 
+• Total Direct Deposit Inflows Per Month: Sum of all direct deposit transactions.
 
+Insurance Coverage
 
-🔗 [PII Data Tagging Guidelines (Internal Link)]
+• Number of Accounts Exceeding FDIC Limit: Tracks how many customer accounts have balances surpassing the FDIC insurance coverage limit.
 
+• Excess Balance Above FDIC Limit: Total dollar amount exceeding the FDIC insurance limit for applicable accounts.
 
-
-3.3 Other Tagging Considerations
-
-• Tags for regulatory compliance (GDPR, CCPA, etc.)
-
-• Tags for business units or functional areas
-
-• Tagging for performance monitoring
-
-
-
-4. How to Implement Tagging in DBT
-
-
-
-Step-by-step instructions or code examples for adding tags in DBT models.
-
-
-
-Example YAML snippet:
-
-models:
-  - name: customer_data
-    description: "Customer details including personal information"
-    tags: ["PII", "customer", "sensitive"]
-5. Helpful Internal Resources & Links
-
-
-
-List relevant internal Confluence pages and documentation that team members should refer to for deeper understanding:
-
-• 🔗 [Company Data Governance Policy]
-
-• 🔗 [Tagging Standards for PII Data]
-
-• 🔗 [DBT Model Documentation Guidelines]
-
-• 🔗 [Snowflake Data Classification & Security]
-
-• 🔗 [Regulatory Compliance Guidelines]
-
-
-
-6. FAQs and Support
-
-
-
-Address common questions and provide links to Slack channels, team contacts, or additional support resources.
-
-• Who to contact for DBT tagging issues?
-
-• Where to request new tag categories?
-
-• How to report a tagging discrepancy?
-
+Let me know if you need further refinements or additional descriptions!

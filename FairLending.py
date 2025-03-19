@@ -137,56 +137,32 @@ class FairLending:
 
 
 
-import streamlit as st
-import pandas as pd
-import altair as alt
-import json
-import requests
+# Title
+st.title("📊 Unemployment Migration by Metropolitan Area")
 
-# Load Unemployment Data (from local CSV file)
-@st.cache_data
-def load_unemployment_data():
- data = pd.read_csv("./test_data/msa_unemployment.csv")
- data.columns = ["series_id", "series_name", "units", "region_name", "region_code", "unemployment_rate"]
- return data
-
-# Load US MSA GeoJSON Map
-@st.cache_data
-def load_geojson():
- url = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json" # Replace with MSA GeoJSON URL
- response = requests.get(url)
- return response.json()
-
-# Load data
-st.title("US Unemployment Rate by Metropolitan Statistical Area (MSA)")
-unemployment_data = load_unemployment_data()
-geojson_data = load_geojson()
-
-# Merge unemployment data with GeoJSON region mapping
-unemployment_data["region_code"] = unemployment_data["region_code"].astype(str) # Ensure codes are strings
-merged_data = unemployment_data.rename(columns={"region_code": "id"}) # Ensure Altair compatibility
-
-# Create Altair Choropleth Map
-st.subheader("Unemployment Rate by MSA")
-
-map_chart = alt.Chart(alt.Data(values=geojson_data["features"])).mark_geoshape().encode(
- color=alt.Color("unemployment_rate:Q", scale=alt.Scale(scheme="reds")),
- tooltip=["region_name:N", "unemployment_rate:Q"]
-).transform_lookup(
- lookup="id",
- from_=alt.LookupData(merged_data, "id", ["region_name", "unemployment_rate"])
+# Create Altair plot
+chart = alt.Chart(df_melted).mark_circle(size=80).encode(
+x=alt.X("Unemployment Rate:Q", title="Unemployment Rate"),
+y=alt.Y("City:N", title="City", sort="-x"),
+color=alt.Color("Date:N", scale=alt.Scale(domain=["Jan 2024", "Jul 2024"], range=["black", "blue"])),
+tooltip=["City", "Date", "Unemployment Rate"]
 ).properties(
- width=800,
- height=500,
- title="US MSA Unemployment Rate"
+width=800,
+height=600,
+title="Unemployment Migration from Jan 2024 to Jul 2024"
 )
 
-# Render the Altair Map in Streamlit
-st.altair_chart(map_chart, use_container_width=True)
+# Create connecting lines between points
+lines = alt.Chart(df).transform_fold(
+["Jan 2024", "Jul 2024"], as_=["Date", "Unemployment Rate"]
+).mark_line(color="gray").encode(
+x="Unemployment Rate:Q",
+y=alt.Y("City:N", sort="-x"),
+detail="City:N"
+)
 
-# Allow filtering by MSA name
-selected_msa = st.selectbox("Select an MSA to view details:", unemployment_data["region_name"].unique())
-filtered_data = unemployment_data[unemployment_data["region_name"] == selected_msa]
+# Combine both layers
+final_chart = lines + chart
 
-st.write("### Selected MSA Data")
-st.write(filtered_data)
+# Display the Altair chart
+st.altair_chart(final_chart, use_container_width=True)

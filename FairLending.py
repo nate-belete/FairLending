@@ -137,29 +137,18 @@ class FairLending:
 
 
 
-# Title
-st.title("📊 Unemployment Migration by Metropolitan Area")
 
-# Create Altair plot
-chart = alt.Chart(df_melted).mark_circle(size=80).encode(
-x=alt.X("Unemployment Rate:Q", title="Unemployment Rate"),
-y=alt.Y("City:N", title="City", sort="-x"),
-color=alt.Color("Date:N", scale=alt.Scale(domain=["Jan 2024", "Jul 2024"], range=["black", "blue"])),
-tooltip=["City", "Date", "Unemployment Rate"]
-).properties(
-width=800,
-height=600,
-title="Unemployment Migration from Jan 2024 to Jul 2024"
-)
-
-# Create connecting lines between points
-lines = alt.Chart(df).transform_fold(
-["Jan 2024", "Jul 2024"], as_=["Date", "Unemployment Rate"]
-).mark_line(color="gray").encode(
-x="Unemployment Rate:Q",
-y=alt.Y("City:N", sort="-x"),
-detail="City:N"
-)
+def create_clickable_container(title, subtitle, logo_base64, page):
+container_html = f"""
+<div class="container grid-container">
+<div class="icon">
+<img src="data:image/png;base64,{logo_base64}" width="40" height="40" />
+</div>
+<h2>{title}</h2>
+<p>{subtitle}</p>
+</div>
+"""
+st.markdown(container_html, unsafe_allow_html=True)
 
 # Combine both layers
 final_chart = lines + chart

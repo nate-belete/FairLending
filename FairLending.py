@@ -135,12 +135,10 @@ class FairLending:
 
 
 
-
-
-
 WITH base_data AS (
 SELECT * FROM your_source_table
 ),
+
 keyword_counts AS (
 SELECT
 b.issue_finding_id,
@@ -149,22 +147,40 @@ b.finding_created_date,
 b.finding_description,
 k.keyword,
 REGEXP_COUNT(LOWER(b.finding_description), LOWER(k.keyword)) AS keyword_count
-FROM base_data b
+FROM your_source_table b
 LEFT JOIN keywords k
 ON LOWER(b.finding_description) LIKE CONCAT('%', LOWER(k.keyword), '%')
 ),
+
+-- NEW: Pre-aggregate keyword counts
+keyword_sums AS (
+SELECT
+issue_finding_id,
+issue_issue_id,
+finding_created_date,
+finding_description,
+keyword,
+SUM(keyword_count) AS keyword_total
+FROM keyword_counts
+GROUP BY
+issue_finding_id,
+issue_issue_id,
+finding_created_date,
+finding_description,
+keyword
+),
+
 agg_keyword_counts AS (
 SELECT
 issue_finding_id,
 issue_issue_id,
 finding_created_date,
 finding_description,
-LISTAGG(CONCAT(keyword, ': ', SUM(keyword_count)), ', ')
-WITHIN GROUP (ORDER BY keyword) AS keyword_occurrence_count,
+LISTAGG(CONCAT(keyword, ': ', keyword_total), ', ') WITHIN GROUP (ORDER BY keyword) AS keyword_occurrence_count,
 COUNT(DISTINCT keyword) AS matched_keywords_count,
 LISTAGG(DISTINCT keyword, ', ') WITHIN GROUP (ORDER BY keyword) AS matched_keywords,
 CASE WHEN COUNT(keyword) > 0 THEN 1 ELSE 0 END AS keyword_flag
-FROM keyword_counts
+FROM keyword_sums
 GROUP BY
 issue_finding_id,
 issue_issue_id,
@@ -174,9 +190,3 @@ finding_description
 
 SELECT * FROM agg_keyword_counts
 ORDER BY finding_created_date DESC;
-
-# Combine both layers
-final_chart = lines + chart
-
-# Display the Altair chart
-st.altair_chart(final_chart, use_container_width=True)

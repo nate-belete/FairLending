@@ -131,62 +131,27 @@ class FairLending:
 
 
 
-
-
-
-
-WITH base_data AS (
-SELECT * FROM your_source_table
-),
-
-keyword_counts AS (
 SELECT
-b.issue_finding_id,
-b.issue_issue_id,
-b.finding_created_date,
-b.finding_description,
-k.keyword,
-REGEXP_COUNT(LOWER(b.finding_description), LOWER(k.keyword)) AS keyword_count
-FROM your_source_table b
-LEFT JOIN keywords k
-ON LOWER(b.finding_description) LIKE CONCAT('%', LOWER(k.keyword), '%')
-),
-
--- NEW: Pre-aggregate keyword counts
-keyword_sums AS (
-SELECT
-issue_finding_id,
-issue_issue_id,
-finding_created_date,
+issue_id,
 finding_description,
-keyword,
-SUM(keyword_count) AS keyword_total
-FROM keyword_counts
-GROUP BY
-issue_finding_id,
-issue_issue_id,
-finding_created_date,
-finding_description,
-keyword
-),
-
-agg_keyword_counts AS (
-SELECT
-issue_finding_id,
-issue_issue_id,
-finding_created_date,
-finding_description,
-LISTAGG(CONCAT(keyword, ': ', keyword_total), ', ') WITHIN GROUP (ORDER BY keyword) AS keyword_occurrence_count,
-COUNT(DISTINCT keyword) AS matched_keywords_count,
-LISTAGG(DISTINCT keyword, ', ') WITHIN GROUP (ORDER BY keyword) AS matched_keywords,
-CASE WHEN COUNT(keyword) > 0 THEN 1 ELSE 0 END AS keyword_flag
-FROM keyword_sums
-GROUP BY
-issue_finding_id,
-issue_issue_id,
-finding_created_date,
-finding_description
+snowflake.ml.complete(
+'gpt-4',
+CONCAT(
+'You are a senior risk analyst tasked with assessing whether a submitted finding description may indicate a broader systemic issue or risk within the company. ',
+'Use the following information to make a decision:\n\n',
+'---\n',
+'Finding Description:\n', finding_description, '\n\n',
+'Summary of Finding (if available):\n', finding_summary, '\n\n',
+'Issue Phase: ', issue_phase, '\n',
+'Owner Team: ', owner_team, '\n',
+'Severity Level: ', severity_level, '\n',
+'Validation Status: ', validation_status, '\n',
+'---\n\n',
+'Based on the content, does this finding suggest a potential systemic issue or recurring risk pattern that could impact compliance, financial health, or operations?\n\n',
+'Respond with:\n',
+'- Yes or No\n',
+'- Brief justification (1–2 sentences)\n',
+'- Suggested next step if systemic risk is suspected'
 )
-
-SELECT * FROM agg_keyword_counts
-ORDER BY finding_created_date DESC;
+) AS systemic_risk_review
+FROM issue_finding_log;

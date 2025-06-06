@@ -130,28 +130,132 @@ class FairLending:
 
 
 
+import streamlit as st
+import pandas as pd
+import altair as alt
+import re
 
-SELECT
-issue_id,
-finding_description,
-snowflake.ml.complete(
-'gpt-4',
-CONCAT(
-'You are a senior risk analyst tasked with assessing whether a submitted finding description may indicate a broader systemic issue or risk within the company. ',
-'Use the following information to make a decision:\n\n',
-'---\n',
-'Finding Description:\n', finding_description, '\n\n',
-'Summary of Finding (if available):\n', finding_summary, '\n\n',
-'Issue Phase: ', issue_phase, '\n',
-'Owner Team: ', owner_team, '\n',
-'Severity Level: ', severity_level, '\n',
-'Validation Status: ', validation_status, '\n',
-'---\n\n',
-'Based on the content, does this finding suggest a potential systemic issue or recurring risk pattern that could impact compliance, financial health, or operations?\n\n',
-'Respond with:\n',
-'- Yes or No\n',
-'- Brief justification (1–2 sentences)\n',
-'- Suggested next step if systemic risk is suspected'
-)
-) AS systemic_risk_review
+# Load CSV
+@st.cache_data
+def load_data():
+    return pd.read_csv("synthetic_systemic_risk_findings.csv")
+
+df = load_data()
+
+# App Structure
+st.set_page_config(page_title="Systemic Risk Dashboard", layout="wide")
+st.title("🛡️ Systemic Risk Insights Dashboard")
+
+# Navigation Tabs
+tab = st.sidebar.radio("Go to", ["📊 Summary Dashboard", "📋 Findings Table", "🔎 Detail View", "📈 Insights & Visualizations", "⬇️ Export"])
+
+# --- 1. Summary Dashboard ---
+if tab == "📊 Summary Dashboard":
+    st.subheader("Summary Metrics")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Findings", len(df))
+    col2.metric("Systemic Risk %", f"{(df['is_systemic_risk'].mean()*100):.1f}%")
+    col3.metric("Avg. Systemic Risk Score", f"{df['systemic_risk_score'].mean():.2f}")
+
+    st.subheader("Findings Over Time")
+    df['created_date'] = pd.to_datetime(df['created_date'])
+    trend = df.groupby(df['created_date'].dt.to_period("M")).size().reset_index(name="count")
+    trend['created_date'] = trend['created_date'].astype(str)
+    chart = alt.Chart(trend).mark_line(point=True).encode(
+    x='created_date:T',
+    y='count:Q'
+    ).properties(width=700, height=400)
+    st.altair_chart(chart, use_container_width=True)
+
+# --- 2. Findings Table ---
+elif tab == "📋 Findings Table":
+    st.subheader("Filter Findings")
+
+    score_range = st.slider("Systemic Risk Score", 0, 2, (0, 2))
+    severity_filter = st.multiselect("Severity Rating", df['severity_rating'].unique(), default=list(df['severity_rating'].unique()))
+    unit_filter = st.multiselect("Assessment Unit", df['assessment_unit'].unique(), default=list(df['assessment_unit'].unique()))
+
+    filtered_df = df[
+    (df['systemic_risk_score'] >= score_range[0]) &
+    (df['systemic_risk_score'] <= score_range[1]) &
+    (df['severity_rating'].isin(severity_filter)) &
+    (df['assessment_unit'].isin(unit_filter))
+    ]
+
+    st.dataframe(filtered_df, use_container_width=True)
+
+# --- 3. Detail View ---
+elif tab == "🔎 Detail View":
+    st.subheader("Select a Finding to View Details")
+    finding_id = st.selectbox("Choose Finding ID", df['finding_ID'].unique())
+
+    record = df[df['finding_ID'] == finding_id].iloc[0]
+
+    # Keyword highlighting function
+    def highlight_keywords(text, keywords):
+        pattern = '|'.join(re.escape(word.strip()) for word in keywords.split(','))
+        return re.sub(f"\\b({pattern})\\b", r"**\1**", text, flags=re.IGNORECASE)
+
+    st.markdown(f"### 📝 Finding ID: `{record['finding_ID']}`")
+    st.markdown(f"**Assessment Unit:** {record['assessment_unit']}")
+    st.markdown(f"**Severity Rating:** {record['severity_rating']}")
+    st.markdown(f"**Systemic Risk Score:** `{record['systemic_risk_score']}`")
+    st.markdown(f"**Matched Keywords:** `{record['matched_keywords']}`")
+
+    st.markdown("#### 🔍 Finding Description")
+    st.markdown(highlight_keywords(record['finding_description'], record['matched_keywords']))
+
+    st.markdown("#### 🧠 LLM Generated Outputs")
+    st.markdown(f"**Summary:** {record['finding_summary']}")
+    st.markdown(f"**Suggestion:** {record['suggestion']}")
+    st.markdown(f"**Risk Description:** {record['risk_description']}")
+    st.markdown(f"**Recommendation:** {record['recommendation']}")
+
+# --- 4. Visualizations ---
+elif tab == "📈 Insights & Visualizations":
+    st.subheader("Systemic Risk Score by Assessment Unit")
+    chart1 = alt.Chart(df).mark_bar().encode(
+    x='assessment_unit:N',
+    y='systemic_risk_score:Q',
+    color='assessment_unit:N'
+    ).properties(width=600, height=400)
+    st.altair_chart(chart1, use_container_width=True)
+
+    st.subheader("Keyword Frequency")
+    from collections import Counter
+    all_keywords = ','.join(df['matched_keywords']).split(',')
+    keyword_counts = Counter([kw.strip().lower() for kw in all_keywords])
+    keyword_df = pd.DataFrame(keyword_counts.items(), columns=['keyword', 'count']).sort_values(by='count', ascending=False)
+
+    chart2 = alt.Chart(keyword_df).mark_bar().encode(
+    x='count:Q',
+    y=alt.Y('keyword:N', sort='-x')
+    ).properties(width=600, height=400)
+    st.altair_chart(chart2, use_container_width=True)
+
+# --- 5. Export ---
+elif tab == "⬇️ Export":
+    st.subheader("Download Filtered Findings")
+    st.markdown("Use filters below to create a subset of data to export.")
+
+    score_range = st.slider("Systemic Risk Score", 0, 2, (0, 2))
+    severity_filter = st.multiselect("Severity Rating", df['severity_rating'].unique(), default=list(df['severity_rating'].unique()))
+    unit_filter = st.multiselect("Assessment Unit", df['assessment_unit'].unique(), default=list(df['assessment_unit'].unique()))
+
+    filtered_export_df = df[
+    (df['systemic_risk_score'] >= score_range[0]) &
+    (df['systemic_risk_score'] <= score_range[1]) &
+    (df['severity_rating'].isin(severity_filter)) &
+    (df['assessment_unit'].isin(unit_filter))
+    ]
+
+    st.dataframe(filtered_export_df, use_container_width=True)
+
+    csv = filtered_export_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+    label="📥 Download CSV",
+    data=csv,
+    file_name="filtered_systemic_findings.csv",
+    mime="text/csv"
+    )
 FROM issue_finding_log;

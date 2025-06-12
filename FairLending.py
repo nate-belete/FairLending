@@ -130,132 +130,49 @@ class FairLending:
 
 
 
-import streamlit as st
-import pandas as pd
-import altair as alt
-import re
 
-# Load CSV
-@st.cache_data
-def load_data():
-    return pd.read_csv("synthetic_systemic_risk_findings.csv")
 
-df = load_data()
 
-# App Structure
-st.set_page_config(page_title="Systemic Risk Dashboard", layout="wide")
-st.title("🛡️ Systemic Risk Insights Dashboard")
 
-# Navigation Tabs
-tab = st.sidebar.radio("Go to", ["📊 Summary Dashboard", "📋 Findings Table", "🔎 Detail View", "📈 Insights & Visualizations", "⬇️ Export"])
 
-# --- 1. Summary Dashboard ---
-if tab == "📊 Summary Dashboard":
-    st.subheader("Summary Metrics")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Findings", len(df))
-    col2.metric("Systemic Risk %", f"{(df['is_systemic_risk'].mean()*100):.1f}%")
-    col3.metric("Avg. Systemic Risk Score", f"{df['systemic_risk_score'].mean():.2f}")
 
-    st.subheader("Findings Over Time")
-    df['created_date'] = pd.to_datetime(df['created_date'])
-    trend = df.groupby(df['created_date'].dt.to_period("M")).size().reset_index(name="count")
-    trend['created_date'] = trend['created_date'].astype(str)
-    chart = alt.Chart(trend).mark_line(point=True).encode(
-    x='created_date:T',
-    y='count:Q'
-    ).properties(width=700, height=400)
-    st.altair_chart(chart, use_container_width=True)
 
-# --- 2. Findings Table ---
-elif tab == "📋 Findings Table":
-    st.subheader("Filter Findings")
 
-    score_range = st.slider("Systemic Risk Score", 0, 2, (0, 2))
-    severity_filter = st.multiselect("Severity Rating", df['severity_rating'].unique(), default=list(df['severity_rating'].unique()))
-    unit_filter = st.multiselect("Assessment Unit", df['assessment_unit'].unique(), default=list(df['assessment_unit'].unique()))
 
-    filtered_df = df[
-    (df['systemic_risk_score'] >= score_range[0]) &
-    (df['systemic_risk_score'] <= score_range[1]) &
-    (df['severity_rating'].isin(severity_filter)) &
-    (df['assessment_unit'].isin(unit_filter))
-    ]
 
-    st.dataframe(filtered_df, use_container_width=True)
 
-# --- 3. Detail View ---
-elif tab == "🔎 Detail View":
-    st.subheader("Select a Finding to View Details")
-    finding_id = st.selectbox("Choose Finding ID", df['finding_ID'].unique())
 
-    record = df[df['finding_ID'] == finding_id].iloc[0]
+import hdbscan
+import numpy as np
+import umap
+import matplotlib.pyplot as plt
 
-    # Keyword highlighting function
-    def highlight_keywords(text, keywords):
-        pattern = '|'.join(re.escape(word.strip()) for word in keywords.split(','))
-        return re.sub(f"\\b({pattern})\\b", r"**\1**", text, flags=re.IGNORECASE)
+def cluster_embeddings_with_hdbscan(embeddings, min_cluster_size=30, metric='euclidean'):
+# Initialize and fit HDBSCAN
+clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, metric=metric)
+cluster_labels = clusterer.fit_predict(embeddings)
 
-    st.markdown(f"### 📝 Finding ID: `{record['finding_ID']}`")
-    st.markdown(f"**Assessment Unit:** {record['assessment_unit']}")
-    st.markdown(f"**Severity Rating:** {record['severity_rating']}")
-    st.markdown(f"**Systemic Risk Score:** `{record['systemic_risk_score']}`")
-    st.markdown(f"**Matched Keywords:** `{record['matched_keywords']}`")
+# Count clusters (excluding noise labeled as -1)
+num_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+num_noise = list(cluster_labels).count(-1)
 
-    st.markdown("#### 🔍 Finding Description")
-    st.markdown(highlight_keywords(record['finding_description'], record['matched_keywords']))
+print(f"Number of clusters (excluding noise): {num_clusters}")
+print(f"Number of noise points: {num_noise}")
 
-    st.markdown("#### 🧠 LLM Generated Outputs")
-    st.markdown(f"**Summary:** {record['finding_summary']}")
-    st.markdown(f"**Suggestion:** {record['suggestion']}")
-    st.markdown(f"**Risk Description:** {record['risk_description']}")
-    st.markdown(f"**Recommendation:** {record['recommendation']}")
+# Reduce to 2D with UMAP for visualization
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric=metric)
+embedding_2d = reducer.fit_transform(embeddings)
 
-# --- 4. Visualizations ---
-elif tab == "📈 Insights & Visualizations":
-    st.subheader("Systemic Risk Score by Assessment Unit")
-    chart1 = alt.Chart(df).mark_bar().encode(
-    x='assessment_unit:N',
-    y='systemic_risk_score:Q',
-    color='assessment_unit:N'
-    ).properties(width=600, height=400)
-    st.altair_chart(chart1, use_container_width=True)
+# Plot the clusters
+plt.figure(figsize=(10, 6))
+plt.scatter(
+embedding_2d[:, 0], embedding_2d[:, 1],
+c=cluster_labels, cmap='Spectral', s=10
+)
+plt.title('HDBSCAN Clustering of BERT Embeddings')
+plt.xlabel('UMAP Dim 1')
+plt.ylabel('UMAP Dim 2')
+plt.colorbar(label='Cluster Label')
+plt.show()
 
-    st.subheader("Keyword Frequency")
-    from collections import Counter
-    all_keywords = ','.join(df['matched_keywords']).split(',')
-    keyword_counts = Counter([kw.strip().lower() for kw in all_keywords])
-    keyword_df = pd.DataFrame(keyword_counts.items(), columns=['keyword', 'count']).sort_values(by='count', ascending=False)
-
-    chart2 = alt.Chart(keyword_df).mark_bar().encode(
-    x='count:Q',
-    y=alt.Y('keyword:N', sort='-x')
-    ).properties(width=600, height=400)
-    st.altair_chart(chart2, use_container_width=True)
-
-# --- 5. Export ---
-elif tab == "⬇️ Export":
-    st.subheader("Download Filtered Findings")
-    st.markdown("Use filters below to create a subset of data to export.")
-
-    score_range = st.slider("Systemic Risk Score", 0, 2, (0, 2))
-    severity_filter = st.multiselect("Severity Rating", df['severity_rating'].unique(), default=list(df['severity_rating'].unique()))
-    unit_filter = st.multiselect("Assessment Unit", df['assessment_unit'].unique(), default=list(df['assessment_unit'].unique()))
-
-    filtered_export_df = df[
-    (df['systemic_risk_score'] >= score_range[0]) &
-    (df['systemic_risk_score'] <= score_range[1]) &
-    (df['severity_rating'].isin(severity_filter)) &
-    (df['assessment_unit'].isin(unit_filter))
-    ]
-
-    st.dataframe(filtered_export_df, use_container_width=True)
-
-    csv = filtered_export_df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-    label="📥 Download CSV",
-    data=csv,
-    file_name="filtered_systemic_findings.csv",
-    mime="text/csv"
-    )
-FROM issue_finding_log;
+return cluster_labels

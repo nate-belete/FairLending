@@ -141,40 +141,55 @@ class FairLending:
 
 
 
-
-
 from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import PCA
+import umap
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 
-inertias = []
-K = range(2, 15)
+def analyze_kmeans_clusters(texts, embeddings, k=6, top_n_words=10, visualize=True):
+"""
+texts : List of raw issue descriptions (strings)
+embeddings : Corresponding BERT embeddings (numpy array)
+k : Number of clusters for KMeans
+"""
+# Step 1: KMeans clustering
+kmeans = KMeans(n_clusters=k, random_state=42)
+cluster_labels = kmeans.fit_predict(embeddings)
 
-for k in K:
- kmeans = KMeans(n_clusters=k, random_state=42)
- kmeans.fit(embeddings)
- inertias.append(kmeans.inertia_)
+# Step 2: Collect top keywords per cluster using TF-IDF
+df = pd.DataFrame({'text': texts, 'cluster': cluster_labels})
+tfidf = TfidfVectorizer(stop_words='english', max_features=5000)
+tfidf_matrix = tfidf.fit_transform(df['text'])
 
-plt.plot(K, inertias, marker='o')
-plt.xlabel('Number of clusters (k)')
-plt.ylabel('Inertia')
-plt.title('Elbow Method For Optimal k')
+keywords = []
+for cluster_num in range(k):
+idxs = df[df['cluster'] == cluster_num].index
+cluster_tfidf = tfidf_matrix[idxs].mean(axis=0)
+cluster_tfidf = np.squeeze(np.asarray(cluster_tfidf))
+top_indices = cluster_tfidf.argsort()[-top_n_words:][::-1]
+top_words = [tfidf.get_feature_names_out()[i] for i in top_indices]
+keywords.append((cluster_num, top_words))
+
+# Print top keywords per cluster
+for cluster_id, words in keywords:
+print(f"Cluster {cluster_id} Top Words: {', '.join(words)}")
+
+# Step 3: Optional 2D Visualization with UMAP
+if visualize:
+reducer = umap.UMAP(n_neighbors=10, min_dist=0.0, metric='cosine')
+embedding_2d = reducer.fit_transform(embeddings)
+plt.figure(figsize=(10, 6))
+plt.scatter(
+embedding_2d[:, 0], embedding_2d[:, 1],
+c=cluster_labels, cmap='Spectral', s=10
+)
+plt.title(f'KMeans Clustering with k={k}')
+plt.xlabel('UMAP Dim 1')
+plt.ylabel('UMAP Dim 2')
+plt.colorbar(label='Cluster')
 plt.show()
 
-
-
-
-from sklearn.metrics import silhouette_score
-
-silhouette_scores = []
-
-for k in range(2, 15):
- kmeans = KMeans(n_clusters=k, random_state=42)
- labels = kmeans.fit_predict(embeddings)
- score = silhouette_score(embeddings, labels)
- silhouette_scores.append(score)
-
-plt.plot(range(2, 15), silhouette_scores, marker='o')
-plt.xlabel('Number of clusters (k)')
-plt.ylabel('Silhouette Score')
-plt.title('Silhouette Analysis For Optimal k')
-plt.show()
+return df # DataFrame with original text and assigned cluster

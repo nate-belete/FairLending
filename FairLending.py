@@ -141,55 +141,79 @@ class FairLending:
 
 
 
-from sklearn.cluster import KMeans
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import PCA
+
+
+import numpy as np
+import pandas as pd
+import hdbscan
 import umap
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-def analyze_kmeans_clusters(texts, embeddings, k=6, top_n_words=10, visualize=True):
-"""
-texts : List of raw issue descriptions (strings)
-embeddings : Corresponding BERT embeddings (numpy array)
-k : Number of clusters for KMeans
-"""
-# Step 1: KMeans clustering
-kmeans = KMeans(n_clusters=k, random_state=42)
-cluster_labels = kmeans.fit_predict(embeddings)
+# ---- Step 1: Load Data ----
+# Assume df is already loaded and contains a column 'finding_description'
+# Assume sentence embeddings are precomputed and loaded
+embeddings = np.load("issue_embeddings_original_desc.npy") # shape (1169, 384)
 
-# Step 2: Collect top keywords per cluster using TF-IDF
-df = pd.DataFrame({'text': texts, 'cluster': cluster_labels})
-tfidf = TfidfVectorizer(stop_words='english', max_features=5000)
-tfidf_matrix = tfidf.fit_transform(df['text'])
+# ---- Step 2: Cluster Embeddings using HDBSCAN ----
+clusterer = hdbscan.HDBSCAN(min_cluster_size=30, metric='euclidean', prediction_data=True)
+cluster_labels = clusterer.fit_predict(embeddings)
 
-keywords = []
-for cluster_num in range(k):
-idxs = df[df['cluster'] == cluster_num].index
-cluster_tfidf = tfidf_matrix[idxs].mean(axis=0)
-cluster_tfidf = np.squeeze(np.asarray(cluster_tfidf))
-top_indices = cluster_tfidf.argsort()[-top_n_words:][::-1]
-top_words = [tfidf.get_feature_names_out()[i] for i in top_indices]
-keywords.append((cluster_num, top_words))
+# Add cluster labels to df
+df['cluster'] = cluster_labels
 
-# Print top keywords per cluster
-for cluster_id, words in keywords:
-print(f"Cluster {cluster_id} Top Words: {', '.join(words)}")
+# Print cluster stats
+n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+n_noise = list(cluster_labels).count(-1)
+print(f"Estimated number of clusters: {n_clusters}")
+print(f"Number of noise points: {n_noise}")
 
-# Step 3: Optional 2D Visualization with UMAP
-if visualize:
-reducer = umap.UMAP(n_neighbors=10, min_dist=0.0, metric='cosine')
-embedding_2d = reducer.fit_transform(embeddings)
-plt.figure(figsize=(10, 6))
-plt.scatter(
-embedding_2d[:, 0], embedding_2d[:, 1],
-c=cluster_labels, cmap='Spectral', s=10
-)
-plt.title(f'KMeans Clustering with k={k}')
-plt.xlabel('UMAP Dim 1')
-plt.ylabel('UMAP Dim 2')
-plt.colorbar(label='Cluster')
+# ---- Step 3: UMAP Visualization ----
+umap_model = umap.UMAP(n_neighbors=15, n_components=2, metric='euclidean')
+umap_embeddings = umap_model.fit_transform(embeddings)
+
+plt.figure(figsize=(12, 8))
+plt.scatter(umap_embeddings[:, 0], umap_embeddings[:, 1], c=cluster_labels, cmap='Spectral', s=10)
+plt.title(f'HDBSCAN Clusters (Estimated: {n_clusters})')
+plt.xlabel("UMAP Dimension 1")
+plt.ylabel("UMAP Dimension 2")
 plt.show()
 
-return df # DataFrame with original text and assigned cluster
+# ---- Step 4: Remove Noise ----
+df = df[df['cluster'] != -1]
+
+# ---- Step 5: Get Top Keywords per Cluster ----
+def get_top_keywords(df, text_col='finding_description', cluster_col='cluster', n_keywords=10):
+cluster_keywords = {}
+for cluster in sorted(df[cluster_col].unique()):
+cluster_texts = df[df[cluster_col] == cluster][text_col]
+
+vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+tfidf_matrix = vectorizer.fit_transform(cluster_texts)
+
+tfidf_scores = tfidf_matrix.mean(axis=0).A1
+feature_names = vectorizer.get_feature_names_out()
+top_indices = tfidf_scores.argsort()[::-1][:n_keywords]
+top_words = [feature_names[i] for i in top_indices]
+
+cluster_keywords[cluster] = top_words
+return cluster_keywords
+
+top_keywords_per_cluster = get_top_keywords(df)
+
+# ---- Step 6: Build Cluster Summary Table ----
+cluster_summary = []
+for cluster, keywords in top_keywords_per_cluster.items():
+example_text = df[df['cluster'] == cluster]['finding_description'].iloc[0]
+cluster_summary.append({
+'cluster': cluster,
+'top_keywords': ', '.join(keywords),
+'example_issue': example_text[:250] + ('...' if len(example_text) > 250 else '')
+})
+
+summary_df = pd.DataFrame(cluster_summary)
+summary_df = summary_df.sort_values('cluster')
+
+# ---- Step 7: Output Summary ----
+from ace_tools import display_dataframe_to_user
+display_dataframe_to_user(name="Cluster Summary Table", dataframe=summary_df)

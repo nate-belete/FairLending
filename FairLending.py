@@ -142,37 +142,39 @@ class FairLending:
 
 
 
-import hdbscan
-import numpy as np
-import umap
+
+from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-def cluster_embeddings_with_hdbscan(embeddings, min_cluster_size=30, metric='euclidean'):
-# Initialize and fit HDBSCAN
-clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, metric=metric)
-cluster_labels = clusterer.fit_predict(embeddings)
+inertias = []
+K = range(2, 15)
 
-# Count clusters (excluding noise labeled as -1)
-num_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
-num_noise = list(cluster_labels).count(-1)
+for k in K:
+ kmeans = KMeans(n_clusters=k, random_state=42)
+ kmeans.fit(embeddings)
+ inertias.append(kmeans.inertia_)
 
-print(f"Number of clusters (excluding noise): {num_clusters}")
-print(f"Number of noise points: {num_noise}")
-
-# Reduce to 2D with UMAP for visualization
-reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric=metric)
-embedding_2d = reducer.fit_transform(embeddings)
-
-# Plot the clusters
-plt.figure(figsize=(10, 6))
-plt.scatter(
-embedding_2d[:, 0], embedding_2d[:, 1],
-c=cluster_labels, cmap='Spectral', s=10
-)
-plt.title('HDBSCAN Clustering of BERT Embeddings')
-plt.xlabel('UMAP Dim 1')
-plt.ylabel('UMAP Dim 2')
-plt.colorbar(label='Cluster Label')
+plt.plot(K, inertias, marker='o')
+plt.xlabel('Number of clusters (k)')
+plt.ylabel('Inertia')
+plt.title('Elbow Method For Optimal k')
 plt.show()
 
-return cluster_labels
+
+
+
+from sklearn.metrics import silhouette_score
+
+silhouette_scores = []
+
+for k in range(2, 15):
+ kmeans = KMeans(n_clusters=k, random_state=42)
+ labels = kmeans.fit_predict(embeddings)
+ score = silhouette_score(embeddings, labels)
+ silhouette_scores.append(score)
+
+plt.plot(range(2, 15), silhouette_scores, marker='o')
+plt.xlabel('Number of clusters (k)')
+plt.ylabel('Silhouette Score')
+plt.title('Silhouette Analysis For Optimal k')
+plt.show()

@@ -141,79 +141,63 @@ class FairLending:
 
 
 
+import boto3
+import cloudpickle
+import os
+import io
+from sentence_transformers import SentenceTransformer
+from snowflake.snowpark.functions import col # Optional: if doing Snowpark ops
 
+def model(dbt, session):
+dbt.config(
+materialized="table",
+packages=["boto3", "cloudpickle", "sentence-transformers", "umap-learn", "hdbscan"]
+)
 
-import numpy as np
-import pandas as pd
-import hdbscan
-import umap
-import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import TfidfVectorizer
+# --- Configuration ---
+s3_bucket = "sofi-data-science"
+s3_prefix = "RISK_ANALYTICS_IRM/Issue_Management/Topic_Modeling/Primary/"
+embedding_model_s3_prefix = f"{s3_prefix}primary_embedding_model/"
+local_embedding_dir = "/tmp/primary_embedding_model"
+s3 = boto3.client("s3")
 
-# ---- Step 1: Load Data ----
-# Assume df is already loaded and contains a column 'finding_description'
-# Assume sentence embeddings are precomputed and loaded
-embeddings = np.load("issue_embeddings_original_desc.npy") # shape (1169, 384)
+# --- Helper: Download cloudpickle model from S3 ---
+def load_pickle_from_s3(key):
+buffer = io.BytesIO()
+s3.download_fileobj(s3_bucket, s3_prefix + key, buffer)
+buffer.seek(0)
+return cloudpickle.load(buffer)
 
-# ---- Step 2: Cluster Embeddings using HDBSCAN ----
-clusterer = hdbscan.HDBSCAN(min_cluster_size=30, metric='euclidean', prediction_data=True)
-cluster_labels = clusterer.fit_predict(embeddings)
+# --- Helper: Download entire embedding model directory from S3 ---
+def download_embedding_model_from_s3():
+paginator = s3.get_paginator("list_objects_v2")
+for page in paginator.paginate(Bucket=s3_bucket, Prefix=embedding_model_s3_prefix):
+for obj in page.get("Contents", []):
+s3_key = obj["Key"]
+rel_path = os.path.relpath(s3_key, embedding_model_s3_prefix)
+local_path = os.path.join(local_embedding_dir, rel_path)
 
-# Add cluster labels to df
-df['cluster'] = cluster_labels
+os.makedirs(os.path.dirname(local_path), exist_ok=True)
+s3.download_file(s3_bucket, s3_key, local_path)
 
-# Print cluster stats
-n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
-n_noise = list(cluster_labels).count(-1)
-print(f"Estimated number of clusters: {n_clusters}")
-print(f"Number of noise points: {n_noise}")
+# --- Download models from S3 ---
+umap_model = load_pickle_from_s3("primary_umap_model.pkl")
+hdbscan_model = load_pickle_from_s3("primary_hdbscan_model.pkl")
+topic_model = load_pickle_from_s3("primary_topic_model.pkl")
 
-# ---- Step 3: UMAP Visualization ----
-umap_model = umap.UMAP(n_neighbors=15, n_components=2, metric='euclidean')
-umap_embeddings = umap_model.fit_transform(embeddings)
+download_embedding_model_from_s3()
+embedding_model = SentenceTransformer(local_embedding_dir)
 
-plt.figure(figsize=(12, 8))
-plt.scatter(umap_embeddings[:, 0], umap_embeddings[:, 1], c=cluster_labels, cmap='Spectral', s=10)
-plt.title(f'HDBSCAN Clusters (Estimated: {n_clusters})')
-plt.xlabel("UMAP Dimension 1")
-plt.ylabel("UMAP Dimension 2")
-plt.show()
+# --- Load input data from ref table ---
+df = dbt.ref("your_input_table") # Replace with actual source table
+pandas_df = df.to_pandas()
 
-# ---- Step 4: Remove Noise ----
-df = df[df['cluster'] != -1]
+# --- Inference pipeline ---
+documents = pandas_df["issue_description"].tolist()
+embeddings = embedding_model.encode(documents)
+umap_embeddings = umap_model.transform(embeddings)
+labels = hdbscan_model.predict(umap_embeddings)
 
-# ---- Step 5: Get Top Keywords per Cluster ----
-def get_top_keywords(df, text_col='finding_description', cluster_col='cluster', n_keywords=10):
-cluster_keywords = {}
-for cluster in sorted(df[cluster_col].unique()):
-cluster_texts = df[df[cluster_col] == cluster][text_col]
+pandas_df["predicted_topic"] = labels
 
-vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-tfidf_matrix = vectorizer.fit_transform(cluster_texts)
-
-tfidf_scores = tfidf_matrix.mean(axis=0).A1
-feature_names = vectorizer.get_feature_names_out()
-top_indices = tfidf_scores.argsort()[::-1][:n_keywords]
-top_words = [feature_names[i] for i in top_indices]
-
-cluster_keywords[cluster] = top_words
-return cluster_keywords
-
-top_keywords_per_cluster = get_top_keywords(df)
-
-# ---- Step 6: Build Cluster Summary Table ----
-cluster_summary = []
-for cluster, keywords in top_keywords_per_cluster.items():
-example_text = df[df['cluster'] == cluster]['finding_description'].iloc[0]
-cluster_summary.append({
-'cluster': cluster,
-'top_keywords': ', '.join(keywords),
-'example_issue': example_text[:250] + ('...' if len(example_text) > 250 else '')
-})
-
-summary_df = pd.DataFrame(cluster_summary)
-summary_df = summary_df.sort_values('cluster')
-
-# ---- Step 7: Output Summary ----
-from ace_tools import display_dataframe_to_user
-display_dataframe_to_user(name="Cluster Summary Table", dataframe=summary_df)
+return session.create_dataframe(pandas_df)
